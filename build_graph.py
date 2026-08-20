@@ -114,17 +114,18 @@ def read_papers(path: Path, authors: dict[str, dict[str, Any]]) -> dict[str, dic
 
 # Fixed taxonomy handed down for the 2026 retreat (Dan's "EHR/Causal" slide),
 # layered on top of the auto-generated per-paper subtopics rather than replacing them.
+# Some slide topics were merged with overlapping auto-generated subtopics (or with each
+# other) into one label — see TOPIC-AUTHOR-LINKS.md for the original slide groupings.
 CURATED_TOPICS = {
-    "Target Trial Emulation / Causal Effect Estimation",
-    "Dynamic Treatment Regimes",
-    "Federated / Transfer Learning",
-    "Missing Data",
-    "Informative Data Collection",
+    "Target trial emulation & causal inference",
+    "Dynamic treatment regimes",
+    "Federated & transfer learning",
+    "Missing & informative data",
     "Prediction",
-    "Latent Trajectories",
-    "Survival Analysis",
+    "Latent trajectories",
+    "Survival analysis",
     "Confounding",
-    "Treatment Effect Heterogeneity",
+    "Treatment effect heterogeneity",
 }
 
 
@@ -170,14 +171,12 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
             concept_slug = kebab_case(subtopic)
             concept_id = f"concept:{concept_slug}"
             curated = subtopic in CURATED_TOPICS
-            existing_concept = nodes.get(concept_id)
-            if existing_concept is None or (curated and not existing_concept["metadata"]["curated"]):
-                nodes[concept_id] = {
-                    "id": concept_id, "type": "concept", "slug": concept_slug,
-                    "label": subtopic, "tier": None, "exists": True, "path": None,
-                    "summary": "Curated topic (2026 retreat taxonomy)" if curated else "Subtopic",
-                    "metadata": {"inbound": 0, "curated": curated},
-                }
+            nodes.setdefault(concept_id, {
+                "id": concept_id, "type": "concept", "slug": concept_slug,
+                "label": subtopic, "tier": None, "exists": True, "path": None,
+                "summary": "Curated topic (2026 retreat taxonomy)" if curated else "Subtopic",
+                "metadata": {"inbound": 0, "curated": curated},
+            })
             edges.add((paper_id, concept_id, "subtopic"))
 
     sorted_edges = [

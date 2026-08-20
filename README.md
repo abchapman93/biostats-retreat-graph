@@ -20,7 +20,9 @@ countdown, then cycles through a shuffled set of subtopics and shows all linked
 publication titles and division authors in a fresh random order. The circular
 timer, or a click on empty graph space, pauses and resumes the cycle. Selecting
 an entity stops the cycle and presents its linked publications in reverse
-chronological order; **Reset** starts the cycle again.
+chronological order; **Reset** starts the cycle again. The **Preview every**
+control changes the topic refresh interval without changing the initial
+countdown.
 
 ## Run locally
 

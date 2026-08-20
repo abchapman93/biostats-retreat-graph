@@ -127,6 +127,14 @@
     gap: 6px;
   }
   #graph-controls input[type="range"] { width: 80px; }
+  #graph-controls select {
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg);
+    color: var(--text);
+    padding: 3px 5px;
+    font-size: 12px;
+  }
 
   /* ── Sidebar ────────────────────────────────────────────────────────── */
   #sidebar {
@@ -584,6 +592,16 @@
     <div id="graph-controls">
       <label>
         <input type="checkbox" id="ehrOnly"> EHR-focused only
+      </label>
+      <label>
+        Preview every
+        <select id="refreshInterval" aria-label="Preview refresh interval">
+          <option value="3000">3s</option>
+          <option value="5500" selected>5.5s</option>
+          <option value="8000">8s</option>
+          <option value="12000">12s</option>
+          <option value="20000">20s</option>
+        </select>
       </label>
       <button id="resetBtn" title="Collapse publications and reset focus">Reset</button>
     </div>
@@ -1257,8 +1275,8 @@ let lastAttractTopicId = null;
 let attractTimerStartedAt = 0;
 let attractRemainingMs = 0;
 let attractPausedByUser = false;
+let attractIntervalMs = 5500;
 const ATTRACT_INITIAL_DELAY_MS = 3000;
-const ATTRACT_INTERVAL_MS = 5500;
 
 const paperId = n => n && n.type === "paper";
 const personId = n => n && n.type === "person";
@@ -1321,7 +1339,7 @@ function attractPaperListHtml(papers) {
   }).join("")}</div>`;
 }
 
-function restartAttractCountdown(durationMs = ATTRACT_INTERVAL_MS) {
+function restartAttractCountdown(durationMs = attractIntervalMs) {
   const progress = document.getElementById("attract-timer-progress");
   progress.style.setProperty("--attract-countdown-duration", `${durationMs}ms`);
   progress.style.animation = "none";
@@ -1344,6 +1362,20 @@ function scheduleAttractAdvance(delayMs) {
   attractRemainingMs = delayMs;
   attractTimerStartedAt = performance.now();
   attractTimer = window.setTimeout(advanceAttractMode, delayMs);
+}
+
+function setAttractInterval(durationMs) {
+  attractIntervalMs = durationMs;
+  if (!attractMode || !conceptId(byId[focusedId])) return;
+  const wasPaused = attractTimer === null;
+  stopAttractTimer();
+  attractRemainingMs = durationMs;
+  restartAttractCountdown(durationMs);
+  if (wasPaused) {
+    document.getElementById("graph-preview").classList.add("attract-paused");
+  } else {
+    scheduleAttractAdvance(durationMs);
+  }
 }
 
 function updateAttractPauseControl() {
@@ -1374,7 +1406,7 @@ function advanceAttractMode() {
   showAttractPreview(topic);
   render();
   buildDirectory();
-  scheduleAttractAdvance(ATTRACT_INTERVAL_MS);
+  scheduleAttractAdvance(attractIntervalMs);
 }
 
 function startAttractMode(delayMs = 0) {
@@ -1410,7 +1442,7 @@ function pauseAttractMode() {
 function resumeAttractMode() {
   if (attractMode && !attractPausedByUser && attractTimer === null) {
     document.getElementById("graph-preview").classList.remove("attract-paused");
-    scheduleAttractAdvance(attractRemainingMs || ATTRACT_INTERVAL_MS);
+    scheduleAttractAdvance(attractRemainingMs || attractIntervalMs);
   }
 }
 
@@ -1762,6 +1794,9 @@ function init() {
     expandedAuthorIds.clear();
     render(); buildDirectory();
     document.getElementById("graph-preview").classList.add("hidden");
+  });
+  document.getElementById("refreshInterval").addEventListener("change", event => {
+    setAttractInterval(Number(event.target.value));
   });
   document.getElementById("resetBtn").addEventListener("click", () => {
     focusedId = null;

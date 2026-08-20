@@ -112,6 +112,22 @@ def read_papers(path: Path, authors: dict[str, dict[str, Any]]) -> dict[str, dic
     return papers
 
 
+# Fixed taxonomy handed down for the 2026 retreat (Dan's "EHR/Causal" slide),
+# layered on top of the auto-generated per-paper subtopics rather than replacing them.
+CURATED_TOPICS = {
+    "Target Trial Emulation / Causal Effect Estimation",
+    "Dynamic Treatment Regimes",
+    "Federated / Transfer Learning",
+    "Missing Data",
+    "Informative Data Collection",
+    "Prediction",
+    "Latent Trajectories",
+    "Survival Analysis",
+    "Confounding",
+    "Treatment Effect Heterogeneity",
+}
+
+
 def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, Any]]) -> dict[str, Any]:
     nodes: dict[str, dict[str, Any]] = {}
     edges: set[tuple[str, str, str]] = set()
@@ -153,11 +169,15 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
                 raise ValueError(f"paper {slug!r} has invalid subtopic {subtopic!r}")
             concept_slug = kebab_case(subtopic)
             concept_id = f"concept:{concept_slug}"
-            nodes.setdefault(concept_id, {
-                "id": concept_id, "type": "concept", "slug": concept_slug,
-                "label": subtopic, "tier": None, "exists": True, "path": None,
-                "summary": "Subtopic", "metadata": {"inbound": 0},
-            })
+            curated = subtopic in CURATED_TOPICS
+            existing_concept = nodes.get(concept_id)
+            if existing_concept is None or (curated and not existing_concept["metadata"]["curated"]):
+                nodes[concept_id] = {
+                    "id": concept_id, "type": "concept", "slug": concept_slug,
+                    "label": subtopic, "tier": None, "exists": True, "path": None,
+                    "summary": "Curated topic (2026 retreat taxonomy)" if curated else "Subtopic",
+                    "metadata": {"inbound": 0, "curated": curated},
+                }
             edges.add((paper_id, concept_id, "subtopic"))
 
     sorted_edges = [

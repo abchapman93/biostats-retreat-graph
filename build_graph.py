@@ -112,6 +112,23 @@ def read_papers(path: Path, authors: dict[str, dict[str, Any]]) -> dict[str, dic
     return papers
 
 
+# Fixed taxonomy handed down for the 2026 retreat (Dan's "EHR/Causal" slide),
+# layered on top of the auto-generated per-paper subtopics rather than replacing them.
+# Some slide topics were merged with overlapping auto-generated subtopics (or with each
+# other) into one label — see TOPIC-AUTHOR-LINKS.md for the original slide groupings.
+CURATED_TOPICS = {
+    "Target trial emulation & causal inference",
+    "Dynamic treatment regimes",
+    "Federated & transfer learning",
+    "Missing & informative data",
+    "Prediction",
+    "Latent trajectories",
+    "Survival analysis",
+    "Confounding",
+    "Treatment effect heterogeneity",
+}
+
+
 def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, Any]]) -> dict[str, Any]:
     nodes: dict[str, dict[str, Any]] = {}
     edges: set[tuple[str, str, str]] = set()
@@ -153,10 +170,12 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
                 raise ValueError(f"paper {slug!r} has invalid subtopic {subtopic!r}")
             concept_slug = kebab_case(subtopic)
             concept_id = f"concept:{concept_slug}"
+            curated = subtopic in CURATED_TOPICS
             nodes.setdefault(concept_id, {
                 "id": concept_id, "type": "concept", "slug": concept_slug,
                 "label": subtopic, "tier": None, "exists": True, "path": None,
-                "summary": "Subtopic", "metadata": {"inbound": 0},
+                "summary": "Curated topic (2026 retreat taxonomy)" if curated else "Subtopic",
+                "metadata": {"inbound": 0, "curated": curated},
             })
             edges.add((paper_id, concept_id, "subtopic"))
 

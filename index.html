@@ -377,6 +377,37 @@
     white-space: nowrap;
     color: var(--muted);
   }
+  #attract-timer {
+    display: none;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    position: relative;
+  }
+  #graph-preview.attracting #attract-timer { display: block; }
+  #attract-timer svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+  #attract-timer-track, #attract-timer-progress { fill: none; stroke-width: 2.5; }
+  #attract-timer-track { stroke: var(--border); }
+  #attract-timer-progress {
+    stroke: var(--accent);
+    stroke-linecap: round;
+    stroke-dasharray: 43.98;
+    stroke-dashoffset: 0;
+    animation: attract-countdown 5.5s linear forwards;
+  }
+  #graph-preview.attract-paused #attract-timer-progress { animation-play-state: paused; }
+  #attract-timer-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 7px;
+    font-weight: 700;
+    line-height: 1;
+    transform: translateY(-0.25px);
+  }
   #graph-preview-header button {
     padding: 3px 8px;
     font-size: 11px;
@@ -389,6 +420,13 @@
     flex-shrink: 0;
   }
   #graph-preview-header button:hover { background: #f0f3f6; }
+  #graph-preview-header #attract-timer {
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+  }
+  #graph-preview-header #attract-timer:hover { background: #e8ecf0; }
   #graph-preview-scroll {
     flex: 1;
     overflow-y: auto;
@@ -498,6 +536,25 @@
   .linked-paper-authors { font-size: 12px; line-height: 1.6; }
   .division-author { color: var(--color-faculty); font-weight: 600; }
 
+  /* Idle topic feed */
+  .attract-paper-feed { animation: attract-feed-in 0.4s ease; }
+  .attract-paper-item { padding: 14px 0; }
+  .attract-paper-item .linked-paper-title { font-size: 15px; line-height: 1.45; }
+  .attract-paper-item .linked-paper-authors { margin-top: 5px; }
+  .attract-paper-item .linked-paper-meta { margin-top: 3px; margin-bottom: 0; }
+  @keyframes attract-countdown {
+    from { stroke-dashoffset: 0; }
+    to { stroke-dashoffset: 43.98; }
+  }
+  @keyframes attract-feed-in {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .attract-paper-feed { animation: none; }
+    #attract-timer-progress { animation-timing-function: steps(10, end); }
+  }
+
   /* ── Footer ─────────────────────────────────────────────────────────── */
   #footer {
     grid-area: footer;
@@ -599,6 +656,13 @@
       <div id="graph-preview" class="hidden">
         <div id="graph-preview-header">
           <div id="graph-preview-title">Preview</div>
+          <button id="attract-timer" type="button" title="Pause preview" aria-label="Pause preview">
+            <svg viewBox="0 0 18 18">
+              <circle id="attract-timer-track" cx="9" cy="9" r="7"></circle>
+              <circle id="attract-timer-progress" cx="9" cy="9" r="7"></circle>
+            </svg>
+            <span id="attract-timer-icon" aria-hidden="true">Ⅱ</span>
+          </button>
           <button id="graph-preview-open" title="Open in Page tab">↗ Full page</button>
           <button id="graph-preview-close" title="Close preview">✕</button>
         </div>
@@ -1186,6 +1250,15 @@ let expandedAuthorIds = new Set();
 let activeTypes = new Set(["person", "paper", "concept"]);
 let ehrOnly = false;
 let currentView = "graph";
+let attractMode = false;
+let attractTimer = null;
+let attractTopicQueue = [];
+let lastAttractTopicId = null;
+let attractTimerStartedAt = 0;
+let attractRemainingMs = 0;
+let attractPausedByUser = false;
+const ATTRACT_INITIAL_DELAY_MS = 3000;
+const ATTRACT_INTERVAL_MS = 5500;
 
 const paperId = n => n && n.type === "paper";
 const personId = n => n && n.type === "person";
@@ -1194,10 +1267,145 @@ const conceptId = n => n && n.type === "concept";
 function reload() {
   graph = window.GRAPH || { nodes: [], edges: [], stats: {} };
   byId = Object.fromEntries(graph.nodes.map(n => [n.id, n]));
+  focusedId = null;
+  expandedAuthorIds.clear();
   document.getElementById("stats").textContent =
     `${graph.stats.total_nodes || 0} publications map · ${graph.nodes.filter(paperId).length} publications · ${graph.nodes.filter(personId).length} authors`;
+  buildDirectory();
+  startAttractMode(ATTRACT_INITIAL_DELAY_MS);
+}
+
+function shuffle(items) {
+  const shuffled = [...items];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+function stopAttractTimer() {
+  if (attractTimer !== null) window.clearTimeout(attractTimer);
+  attractTimer = null;
+}
+
+function endAttractMode() {
+  attractMode = false;
+  attractPausedByUser = false;
+  stopAttractTimer();
+  document.getElementById("graph-preview").classList.remove("attracting", "attract-paused");
+  updateAttractPauseControl();
+}
+
+function refillAttractTopicQueue() {
+  const topics = layoutModel().topics.filter(topic => papersForTopic(topic.id).some(paperPasses));
+  attractTopicQueue = shuffle(topics);
+  if (attractTopicQueue.length > 1 && attractTopicQueue[0].id === lastAttractTopicId) {
+    [attractTopicQueue[0], attractTopicQueue[1]] = [attractTopicQueue[1], attractTopicQueue[0]];
+  }
+}
+
+function randomizeAttractPapers(topicId) {
+  return shuffle(papersForTopic(topicId).filter(paperPasses));
+}
+
+function attractPaperListHtml(papers) {
+  return `<div class="attract-paper-feed">${papers.map(paper => {
+    const authorNames = authorsForPaper(paper.id).map(author => author.label);
+    const authorsHtml = authorNames.map(name => `<span class="division-author">${escapeHtml(name)}</span>`).join(", ");
+    return `<div class="linked-paper-item attract-paper-item" data-paper-id="${paper.id}">
+      <div class="linked-paper-title">${escapeHtml(paper.metadata.title || paper.label)}</div>
+      ${authorsHtml ? `<div class="linked-paper-authors">${authorsHtml}</div>` : ""}
+      <div class="linked-paper-meta">${escapeHtml(paper.metadata.year || "n.d.")} &middot; ${escapeHtml(paper.metadata.venue || "Not available")}</div>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function restartAttractCountdown() {
+  const progress = document.getElementById("attract-timer-progress");
+  progress.style.animation = "none";
+  void progress.getBoundingClientRect();
+  progress.style.animation = "";
+}
+
+function showAttractPreview(topic) {
+  const papers = randomizeAttractPapers(topic.id);
+  const preview = document.getElementById("graph-preview");
+  document.getElementById("graph-preview-title").textContent = topic.label;
+  preview.classList.remove("hidden", "attract-paused");
+  preview.classList.add("attracting");
+  document.getElementById("graph-preview-scroll").scrollTop = 0;
+  document.getElementById("graph-preview-inner").innerHTML = attractPaperListHtml(papers);
+  restartAttractCountdown();
+}
+
+function scheduleAttractAdvance(delayMs) {
+  attractRemainingMs = delayMs;
+  attractTimerStartedAt = performance.now();
+  attractTimer = window.setTimeout(advanceAttractMode, delayMs);
+}
+
+function updateAttractPauseControl() {
+  const control = document.getElementById("attract-timer");
+  const label = attractPausedByUser ? "Resume preview" : "Pause preview";
+  control.title = label;
+  control.setAttribute("aria-label", label);
+  document.getElementById("attract-timer-icon").textContent = attractPausedByUser ? "▶" : "Ⅱ";
+}
+
+function toggleAttractPause() {
+  if (!attractMode || !conceptId(byId[focusedId])) return;
+  attractPausedByUser = !attractPausedByUser;
+  updateAttractPauseControl();
+  if (attractPausedByUser) pauseAttractMode();
+  else resumeAttractMode();
+}
+
+function advanceAttractMode() {
+  stopAttractTimer();
+  if (!attractMode || currentView !== "graph") return;
+  if (!attractTopicQueue.length) refillAttractTopicQueue();
+  const topic = attractTopicQueue.shift();
+  if (!topic) return;
+  lastAttractTopicId = topic.id;
+  focusedId = topic.id;
+  expandedAuthorIds.clear();
+  showAttractPreview(topic);
   render();
   buildDirectory();
+  scheduleAttractAdvance(ATTRACT_INTERVAL_MS);
+}
+
+function startAttractMode(delayMs = 0) {
+  stopAttractTimer();
+  attractMode = true;
+  attractPausedByUser = false;
+  attractTopicQueue = [];
+  updateAttractPauseControl();
+  if (delayMs > 0) {
+    focusedId = null;
+    document.getElementById("graph-preview").classList.add("hidden");
+    document.getElementById("graph-preview").classList.remove("attracting", "attract-paused");
+    render();
+    buildDirectory();
+    scheduleAttractAdvance(delayMs);
+  } else {
+    advanceAttractMode();
+  }
+}
+
+function pauseAttractMode() {
+  if (!attractMode || attractTimer === null) return;
+  attractRemainingMs = Math.max(0, attractRemainingMs - (performance.now() - attractTimerStartedAt));
+  stopAttractTimer();
+  document.getElementById("graph-preview").classList.add("attract-paused");
+}
+
+function resumeAttractMode() {
+  if (attractMode && !attractPausedByUser && attractTimer === null) {
+    document.getElementById("graph-preview").classList.remove("attract-paused");
+    scheduleAttractAdvance(attractRemainingMs || ATTRACT_INTERVAL_MS);
+  }
 }
 
 function primaryAuthorId(paper) {
@@ -1259,6 +1467,14 @@ function tooltip(node) {
   return details.join("\n");
 }
 
+function authorLinkedToTopic(authorId, topicId, papers) {
+  return graph.edges.some(edge => edge.section === "topic" && edge.source === authorId && edge.target === topicId) ||
+    papers.some(paper =>
+      graph.edges.some(edge => edge.section === "author" && edge.source === authorId && edge.target === paper.id) &&
+      graph.edges.some(edge => edge.section === "subtopic" && edge.source === paper.id && edge.target === topicId)
+    );
+}
+
 function render() {
   if (!graph.nodes.length || typeof vis === "undefined") return;
   const model = layoutModel();
@@ -1266,15 +1482,22 @@ function render() {
   const positions = new Map();
   const topicRadius = 165;
   const authorRadius = 390;
+  const attractTopicId = attractMode && conceptId(byId[focusedId]) ? focusedId : null;
+  const attractAuthorIds = new Set(attractTopicId
+    ? model.authors.filter(author => authorLinkedToTopic(author.id, attractTopicId, model.papers)).map(author => author.id)
+    : []);
 
   model.topics.sort((a, b) => a.label.localeCompare(b.label)).forEach((topic, i, all) => {
     const angle = -Math.PI / 2 + i * Math.PI * 2 / Math.max(1, all.length);
     const point = polar(angle, topicRadius);
     positions.set(topic.id, { ...point, angle });
     const count = model.papers.filter(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)).length;
+    const highlighted = focusedId === topic.id;
     nodes.push(makeNode(topic, point.x, point.y, {
-      size: Math.min(30, 13 + Math.sqrt(count) * 1.4),
-      color: { background: COLORS.concept, border: "#4d86a8" }, borderWidth: 1.5,
+      size: Math.min(34, 13 + Math.sqrt(count) * 1.4 + (highlighted ? 4 : 0)),
+      color: { background: highlighted ? "#8fc6e5" : COLORS.concept, border: "#4d86a8" }, borderWidth: highlighted ? 3 : 1.5,
+      shadow: highlighted ? { enabled: true, color: "rgba(77,134,168,.35)", size: 14, x: 0, y: 0 } : false,
+      opacity: attractTopicId ? (highlighted ? 1 : 0.16) : 1,
       font: { color: "#16384d", size: 12, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
     }));
   });
@@ -1296,6 +1519,7 @@ function render() {
         ? { background: COLORS.faculty, border: "#7a0019" }
         : { background: "#ffffff", border: COLORS.trainee },
       borderWidth: 2,
+      opacity: attractTopicId ? (attractAuthorIds.has(author.id) ? 0.82 : 0.12) : 1,
       font: { color: "#4b0010", size: 13, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
     }));
     if (!activeTypes.has("paper") || !count || !expandedAuthorIds.has(author.id)) return;
@@ -1320,14 +1544,13 @@ function render() {
   const edges = [];
   for (const author of model.authors) {
     for (const topic of model.topics) {
-      const linked = graph.edges.some(e => e.section === "topic" && e.source === author.id && e.target === topic.id) ||
-        model.papers.some(p =>
-          graph.edges.some(e => e.section === "author" && e.source === author.id && e.target === p.id) &&
-          graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)
-        );
+      const linked = authorLinkedToTopic(author.id, topic.id, model.papers);
       if (!linked) continue;
       const highlighted = focusedId === author.id || focusedId === topic.id;
-      edges.push({ from: author.id, to: topic.id, color: { color: highlighted ? "rgba(77,134,168,.58)" : "rgba(77,134,168,.32)" }, width: highlighted ? 1.5 : .6, smooth: false });
+      const color = attractTopicId
+        ? (highlighted ? "rgba(77,134,168,.72)" : "rgba(77,134,168,.05)")
+        : (highlighted ? "rgba(77,134,168,.58)" : "rgba(77,134,168,.32)");
+      edges.push({ from: author.id, to: topic.id, color: { color }, width: highlighted ? 1.5 : .6, smooth: false });
     }
   }
   for (const edge of graph.edges) {
@@ -1350,7 +1573,10 @@ function render() {
     interaction: { hover: true, tooltipDelay: 120, dragNodes: false, multiselect: false },
   });
   network.on("click", params => {
-    if (!params.nodes.length) return;
+    if (!params.nodes.length) {
+      toggleAttractPause();
+      return;
+    }
     const id = params.nodes[0];
     if (personId(byId[id])) return toggleAuthor(id);
     selectNode(id);
@@ -1359,12 +1585,14 @@ function render() {
 }
 
 function toggleAuthor(authorId) {
+  endAttractMode();
   focusedId = authorId;
   expandedAuthorIds = expandedAuthorIds.has(authorId) ? new Set() : new Set([authorId]);
   render(); buildDirectory(); showPreview(authorId);
 }
 
 function selectNode(id) {
+  endAttractMode();
   const node = byId[id];
   if (!node) return;
   if (paperId(node)) {
@@ -1446,7 +1674,10 @@ function authorsForTopic(id) {
 
 function paperListHtml(papers) {
   if (!papers.length) return '<p style="color:var(--muted);font-style:italic;">No linked publications.</p>';
-  const sorted = [...papers].sort((a, b) => (b.metadata.year || 0) - (a.metadata.year || 0));
+  const sorted = [...papers].sort((a, b) =>
+    (b.metadata.year || 0) - (a.metadata.year || 0) ||
+    (a.metadata.title || a.label).localeCompare(b.metadata.title || b.label)
+  );
   return sorted.map(p => {
     const authorNames = authorsForPaper(p.id).map(a => a.label);
     const authorsHtml = authorNames.length
@@ -1508,26 +1739,52 @@ function init() {
     label.innerHTML = `<input type="checkbox" data-type="${type}" checked><span class="swatch" style="background:${COLORS[type]};${type === "paper" ? `border:1px solid ${COLORS.paperOutline}` : ""}"></span>${TYPE_LABELS[type]}`;
     filterHost.append(label);
   }
-  filterHost.addEventListener("change", event => { const type = event.target.dataset.type; if (!type) return; event.target.checked ? activeTypes.add(type) : activeTypes.delete(type); render(); buildDirectory(); });
-  document.getElementById("ehrOnly").addEventListener("change", event => { ehrOnly = event.target.checked; focusedId = null; expandedAuthorIds.clear(); render(); buildDirectory(); document.getElementById("graph-preview").classList.add("hidden"); });
-  document.getElementById("resetBtn").addEventListener("click", () => { focusedId = null; expandedAuthorIds.clear(); render(); buildDirectory(); document.getElementById("graph-preview").classList.add("hidden"); });
+  filterHost.addEventListener("change", event => {
+    const type = event.target.dataset.type;
+    if (!type) return;
+    endAttractMode();
+    event.target.checked ? activeTypes.add(type) : activeTypes.delete(type);
+    focusedId = null;
+    expandedAuthorIds.clear();
+    document.getElementById("graph-preview").classList.add("hidden");
+    render(); buildDirectory();
+  });
+  document.getElementById("ehrOnly").addEventListener("change", event => {
+    endAttractMode();
+    ehrOnly = event.target.checked;
+    focusedId = null;
+    expandedAuthorIds.clear();
+    render(); buildDirectory();
+    document.getElementById("graph-preview").classList.add("hidden");
+  });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    focusedId = null;
+    expandedAuthorIds.clear();
+    startAttractMode();
+  });
   document.getElementById("search-input").addEventListener("input", updateSearch);
-  document.getElementById("graph-preview-close").addEventListener("click", () => document.getElementById("graph-preview").classList.add("hidden"));
+  document.getElementById("search-input").addEventListener("focus", endAttractMode);
+  document.getElementById("attract-timer").addEventListener("click", toggleAttractPause);
+  document.getElementById("graph-preview-close").addEventListener("click", () => {
+    endAttractMode();
+    document.getElementById("graph-preview").classList.add("hidden");
+  });
   for (const hostId of ["page-inner", "graph-preview-inner"]) {
     document.getElementById(hostId).addEventListener("click", event => {
       const item = event.target.closest(".linked-paper-item");
       if (item) selectNode(item.dataset.paperId);
     });
   }
-  document.getElementById("graph-preview-open").addEventListener("click", () => { if (!focusedId) return; showPage(focusedId); switchView("page"); });
-  document.getElementById("graphTab").addEventListener("click", () => switchView("graph"));
-  document.getElementById("pageTab").addEventListener("click", () => switchView("page"));
-  document.getElementById("sidebarToggle").addEventListener("click", () => { document.getElementById("app").classList.toggle("sidebar-collapsed"); setTimeout(() => network && network.fit({ animation: false, padding: .12 }), 220); });
-  document.getElementById("zoomIn").addEventListener("click", () => network && network.moveTo({ scale: network.getScale() * 1.2, animation: { duration: 180 } }));
-  document.getElementById("zoomOut").addEventListener("click", () => network && network.moveTo({ scale: network.getScale() / 1.2, animation: { duration: 180 } }));
-  document.getElementById("zoomFit").addEventListener("click", () => network && network.fit({ animation: { duration: 220 }, padding: .12 }));
+  document.getElementById("graph-preview-open").addEventListener("click", () => { if (!focusedId) return; endAttractMode(); showPage(focusedId); switchView("page"); });
+  document.getElementById("graphTab").addEventListener("click", () => { endAttractMode(); switchView("graph"); });
+  document.getElementById("pageTab").addEventListener("click", () => { endAttractMode(); switchView("page"); });
+  document.getElementById("sidebarToggle").addEventListener("click", () => { endAttractMode(); document.getElementById("app").classList.toggle("sidebar-collapsed"); setTimeout(() => network && network.fit({ animation: false, padding: .12 }), 220); });
+  document.getElementById("zoomIn").addEventListener("click", () => { endAttractMode(); if (network) network.moveTo({ scale: network.getScale() * 1.2, animation: { duration: 180 } }); });
+  document.getElementById("zoomOut").addEventListener("click", () => { endAttractMode(); if (network) network.moveTo({ scale: network.getScale() / 1.2, animation: { duration: 180 } }); });
+  document.getElementById("zoomFit").addEventListener("click", () => { endAttractMode(); if (network) network.fit({ animation: { duration: 220 }, padding: .12 }); });
   document.getElementById("reloadBtn").addEventListener("click", reload);
-  document.getElementById("doneBtn").addEventListener("click", () => { document.getElementById("stats").textContent = "Local viewer remains open."; });
+  document.getElementById("doneBtn").addEventListener("click", () => { endAttractMode(); document.getElementById("stats").textContent = "Local viewer remains open."; });
+  document.addEventListener("visibilitychange", () => document.hidden ? pauseAttractMode() : resumeAttractMode());
   switchView("graph");
   reload();
 }

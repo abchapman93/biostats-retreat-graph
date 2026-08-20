@@ -15,6 +15,12 @@ Click an author to expand that author's publications. Each publication remains c
 but is positioned around one primary display author. Click a publication to see
 its metadata and its subtopic links. The **EHR-focused only** control filters
 the view to EHR-relevant publications and their connected authors/subtopics.
+After a brief initial pause, the preview panel cycles through a shuffled set of
+subtopics and shows all linked publication titles and division authors in a
+fresh random order. The circular timer, or a click on empty graph space, pauses
+and resumes the cycle. Selecting an entity stops the cycle and presents its
+linked publications in reverse chronological order; **Reset** starts the cycle
+again.
 
 ## Run locally
 

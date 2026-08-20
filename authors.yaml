@@ -265,6 +265,7 @@ authors:
       materials science, and an institution-filtered University of Utah search returned
       zero Yongjun Lee author records. This is consistent with a student who currently has
       no indexed OpenAlex publications under the Utah affiliation.
+    topics: ["Target trial emulation & causal inference", "Missing & informative data", "Dynamic treatment regimes"]
 
   - slug: ravinder-singh
     name: "Ravinder Singh"

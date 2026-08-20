@@ -3,6 +3,8 @@
 A self-contained, presentation-oriented visualization of University of Utah
 Biostatistics authors, their publications, and EHR-relevant research subtopics.
 
+Live site: <https://abchapman93.github.io/biostats-retreat-graph/>.
+
 The default view keeps the graph readable for a retreat presentation:
 
 - red circles in the upper semicircle are faculty authors;
@@ -35,9 +37,9 @@ python3 build_graph.py
 ```
 
 This overwrites `graph-data.js`, which is loaded locally by `index.html`.
-`raw-candidate-topics.jsonl` contains row-aligned topic assignments for the
-unreviewed records in `raw-candidates.jsonl`; it does not add those candidates
-to the graph until they are promoted into `papers.jsonl`.
+`raw-candidate-topics.jsonl` contains row-aligned topic assignments for
+`raw-candidates.jsonl`. All candidates not marked `likely_noise` have been
+promoted into `papers.jsonl`; the flagged records remain excluded.
 Publication metadata carries a `primary_author` display anchor. The current
 source retains ordered division coauthors but not publication-wide first/senior
 author positions, so roster order is used as the deterministic fallback.

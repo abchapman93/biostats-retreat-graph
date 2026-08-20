@@ -146,7 +146,10 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
         }
 
     for slug, author in authors.items():
-        if author.get("status") != "resolved":
+        # A `none` author is identity-confirmed but has no safely attributable
+        # OpenAlex works. Keep that person in the retreat roster via direct topic
+        # links, rather than omitting them from the graph altogether.
+        if author.get("status") not in {"resolved", "none"}:
             continue
         person_id = f"person:{slug}"
         nodes[person_id] = {

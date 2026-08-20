@@ -393,7 +393,7 @@
     stroke-linecap: round;
     stroke-dasharray: 43.98;
     stroke-dashoffset: 0;
-    animation: attract-countdown 5.5s linear forwards;
+    animation: attract-countdown var(--attract-countdown-duration, 5.5s) linear forwards;
   }
   #graph-preview.attract-paused #attract-timer-progress { animation-play-state: paused; }
   #attract-timer-icon {
@@ -1321,8 +1321,9 @@ function attractPaperListHtml(papers) {
   }).join("")}</div>`;
 }
 
-function restartAttractCountdown() {
+function restartAttractCountdown(durationMs = ATTRACT_INTERVAL_MS) {
   const progress = document.getElementById("attract-timer-progress");
+  progress.style.setProperty("--attract-countdown-duration", `${durationMs}ms`);
   progress.style.animation = "none";
   void progress.getBoundingClientRect();
   progress.style.animation = "";
@@ -1354,7 +1355,7 @@ function updateAttractPauseControl() {
 }
 
 function toggleAttractPause() {
-  if (!attractMode || !conceptId(byId[focusedId])) return;
+  if (!attractMode || document.getElementById("graph-preview").classList.contains("hidden")) return;
   attractPausedByUser = !attractPausedByUser;
   updateAttractPauseControl();
   if (attractPausedByUser) pauseAttractMode();
@@ -1384,8 +1385,13 @@ function startAttractMode(delayMs = 0) {
   updateAttractPauseControl();
   if (delayMs > 0) {
     focusedId = null;
-    document.getElementById("graph-preview").classList.add("hidden");
-    document.getElementById("graph-preview").classList.remove("attracting", "attract-paused");
+    const preview = document.getElementById("graph-preview");
+    preview.classList.remove("hidden", "attract-paused");
+    preview.classList.add("attracting");
+    document.getElementById("graph-preview-title").textContent = "Preview";
+    document.getElementById("graph-preview-scroll").scrollTop = 0;
+    document.getElementById("graph-preview-inner").innerHTML = "";
+    restartAttractCountdown(delayMs);
     render();
     buildDirectory();
     scheduleAttractAdvance(delayMs);

@@ -112,6 +112,102 @@ authors:
       disease surveillance, biomedical text mining, and machine learning in healthcare,
       matching the Utah profile. Rejected same-name records included a UCL mental-health
       scholar and multiple engineering/materials authors.
+    topics: ["Bayesian methods", "Prediction"]
+
+  - slug: daniel-kevin-addo
+    name: "Daniel Kevin Addo"
+    aliases: ["Daniel Addo", "Daniel K Addo", "Daniel K. Addo", "Daniel Kevin Addo", "D. K. Addo"]
+    role: student
+    orcid: null
+    openalex_author_id: "A5051263891"
+    faculty_page_url: "https://medicine.utah.edu/population-health-sciences/student/daniel-addo"
+    works_count: 17
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences identifies Daniel Addo as a
+      Biostatistics PhD student with causal-inference, survival-analysis, data-visualization,
+      and statistical-computing interests. His academic profile identifies him as Daniel Kevin
+      Addo and describes target-trial emulation, covariate balance, mediation, machine learning,
+      and large-scale EHR data. OpenAlex author A5051263891 appears on a verified Addo paper
+      with University of Utah and Intermountain Healthcare affiliations and returns a coherent
+      17-work 2021+ corpus.
+    topics: ["Target trial emulation & causal inference"]
+
+  - slug: eric-anto
+    name: "Eric Anto"
+    aliases: ["Eric Anto", "E. Anto"]
+    role: student
+    orcid: "0000-0003-4971-949X"
+    openalex_author_id: "A5049021769"
+    faculty_page_url: "https://medicine.utah.edu/population-health-sciences/staff/eric-anto"
+    works_count: 8
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences identifies Eric Anto as a Biostatistics
+      PhD student and Graduate Research Assistant. The profile lists causal inference,
+      moderation/mediation, survival analysis, and machine-learning applications among his
+      interests; a University of Texas at El Paso alumni publication independently confirms
+      his 2021 Statistics MS and subsequent Utah Population Health Sciences PhD enrollment.
+      ORCID 0000-0003-4971-949X and OpenAlex author A5049021769 agree with the Utah identity
+      and return an eight-work 2021+ corpus.
+    topics: ["Target trial emulation & causal inference"]
+
+  - slug: jennifer-xu
+    name: "Shiyao (Jennifer) Xu"
+    aliases: ["Jennifer Xu", "Shiyao Xu", "Shiyao Jennifer Xu", "S. Xu"]
+    role: postdoc
+    orcid: null
+    openalex_author_id: null
+    faculty_page_url: "https://medicine.utah.edu/population-health-sciences/postdoctoral-fellows"
+    works_count: null
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences lists Shiyao (Jennifer) Xu as a
+      postdoctoral fellow with a 2025 Johns Hopkins Biostatistics PhD. Her listed interests
+      include causal inference, benefit-risk analysis, survival analysis of large-scale health
+      data, missing data, unmeasured confounding, and integration of randomized and
+      observational data. The Johns Hopkins Biostatistics alumni listing confirms her thesis
+      on causal inference with bivariate missing data and large-scale observational studies
+      and her University of Utah placement. Same-name OpenAlex results are ambiguous, so no
+      persistent author identifier is assigned.
+    topics: ["Target trial emulation & causal inference", "Missing & informative data"]
+
+  - slug: michael-j-throolin
+    name: "Michael J. Throolin"
+    aliases: ["Michael Throolin", "Michael J Throolin", "Michael J. Throolin", "M. J. Throolin"]
+    role: student
+    orcid: null
+    openalex_author_id: null
+    faculty_page_url: "https://medicine.utah.edu/population-health-sciences/staff/michael-throolin"
+    works_count: null
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences identifies Michael Throolin as a
+      Biostatistics PhD student with causal-inference, high-dimensional-data,
+      clinical-trial, and missing/censored-data interests. A 2023 Montana State University
+      writing project uses the full name Michael J. Throolin and addresses directed acyclic
+      graphs and causal inference, corroborating the identity and slide spelling. No reliable
+      OpenAlex or ORCID identifier was found.
+    topics: ["Target trial emulation & causal inference", "Federated & transfer learning"]
+
+  - slug: tom-h-greene
+    name: "Tom H. Greene"
+    aliases: ["Tom Greene", "Tom H Greene", "Tom H. Greene", "T. H. Greene"]
+    role: faculty
+    orcid: "0000-0002-3706-7570"
+    openalex_author_id: "A5016452405"
+    faculty_page_url: "https://medicine.utah.edu/faculty/tom-h-greene"
+    works_count: 728
+    status: resolved
+    evidence: >
+      The University of Utah faculty profile identifies Tom H. Greene as a Professor of
+      Biostatistics and Epidemiology and Director of the Population Health Research
+      Foundation/Study Design and Biostatistics Center. It lists clinical-trial design,
+      causal inference, and surrogate-endpoint validation among his methodological work,
+      matching the slide's causal-effect-estimation listing. ORCID 0000-0002-3706-7570 resolves
+      to OpenAlex author A5016452405, whose current University of Utah affiliation and 728-work
+      corpus confirm the identity.
+    topics: ["Target trial emulation & causal inference"]
 
   - slug: julia-bohman
     name: "Julia Bohman"

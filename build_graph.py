@@ -117,6 +117,7 @@ def read_papers(path: Path, authors: dict[str, dict[str, Any]]) -> dict[str, dic
 # Some slide topics were merged with overlapping auto-generated subtopics (or with each
 # other) into one label — see TOPIC-AUTHOR-LINKS.md for the original slide groupings.
 CURATED_TOPICS = {
+    "Bayesian methods",
     "Target trial emulation & causal inference",
     "Dynamic treatment regimes",
     "Federated & transfer learning",

@@ -1,0 +1,1442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>EHR Research Knowledge Graph</title>
+<script src="vis-network.min.js"></script>
+<script src="graph-data.js"></script>
+<style>
+  :root {
+    --bg: #ffffff;
+    --panel: #f6f8fa;
+    --border: #d0d7de;
+    --text: #1f2328;
+    --muted: #57606a;
+    --accent: #cc0000;
+    --danger: #cf222e;
+
+    --color-person: #cc0000;
+    --color-paper: #ffffff;
+    --color-concept: #b9d9ee;
+
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 14px;
+  }
+  #app {
+    display: grid;
+    grid-template-columns: var(--sidebar-w) 1fr;
+    grid-template-rows: 48px 1fr 28px;
+    grid-template-areas:
+      "topbar topbar"
+      "sidebar main"
+      "footer  footer";
+    height: 100vh;
+    transition: grid-template-columns 0.2s ease;
+  }
+  #app.sidebar-collapsed {
+    grid-template-columns: 0 1fr;
+  }
+
+  /* ── Topbar ─────────────────────────────────────────────────────────── */
+  #topbar {
+    grid-area: topbar;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+  }
+  #topbar h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  #topbar .divider {
+    width: 1px; height: 20px;
+    background: var(--border);
+    margin: 0 4px;
+  }
+  #topbar .spacer { flex: 1; }
+  #topbar button {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  #topbar button:hover { background: #f0f3f6; }
+  #sidebarToggle {
+    font-size: 16px;
+    padding: 4px 8px !important;
+    background: transparent !important;
+    border-color: transparent !important;
+  }
+  #sidebarToggle:hover { background: #e8ecf0 !important; }
+
+  /* View tabs — segmented control style */
+  #view-tabs {
+    display: flex;
+    background: var(--border);
+    border-radius: 7px;
+    padding: 2px;
+    gap: 2px;
+  }
+  #view-tabs .tab {
+    padding: 4px 14px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  #view-tabs .tab.active {
+    background: var(--bg);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12);
+  }
+  #view-tabs .tab:hover:not(.active) { color: var(--text); }
+
+  /* Graph-only controls shown when graph tab active */
+  #graph-controls {
+    display: none;
+    align-items: center;
+    gap: 8px;
+  }
+  #graph-controls.visible { display: flex; }
+  #graph-controls label {
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  #graph-controls input[type="range"] { width: 80px; }
+
+  /* ── Sidebar ────────────────────────────────────────────────────────── */
+  #sidebar {
+    grid-area: sidebar;
+    border-right: 1px solid var(--border);
+    background: var(--panel);
+    overflow: hidden;
+    transition: width 0.2s ease;
+    width: var(--sidebar-w);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  #app.sidebar-collapsed #sidebar {
+    width: 0;
+    border-right: none;
+  }
+  #sidebar-inner {
+    width: var(--sidebar-w);
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 12px;
+  }
+
+  /* Collapsible sections via <details> */
+  .filter-section {
+    margin-bottom: 4px;
+  }
+  .filter-section summary {
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    list-style: none;
+    padding: 6px 2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .filter-section summary::-webkit-details-marker { display: none; }
+  .filter-section summary::before { content: "▸"; font-size: 9px; }
+  .filter-section[open] summary::before { content: "▾"; }
+  .filter-section summary:hover { color: var(--text); }
+  .filter-section .section-body { padding: 2px 0 6px 4px; }
+
+  #search-input {
+    width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  #search-results {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    overflow-y: auto;
+    max-height: 200px;
+    display: none;
+    margin-bottom: 8px;
+  }
+  .search-result-item {
+    padding: 5px 8px;
+    cursor: pointer;
+    font-size: 12px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  .search-result-item:last-child { border-bottom: none; }
+  .search-result-item:hover { background: #f0f3f6; }
+  .search-result-label { font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .search-result-type { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+  .search-result-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  label.filter {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    padding: 2px 0;
+    cursor: pointer;
+  }
+  .swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Legend */
+  .legend-row { font-size: 12px; line-height: 1.8; display: flex; align-items: center; gap: 6px; }
+  .legend-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
+  /* Entity directory list */
+  .entity-group { margin-bottom: 2px; }
+  .entity-group > summary {
+    cursor: pointer;
+    user-select: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 4px 2px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--text);
+    list-style: none;
+  }
+  .entity-group > summary::-webkit-details-marker { display: none; }
+  .entity-group > summary::before { content: "▸"; font-size: 9px; color: var(--muted); flex-shrink: 0; }
+  .entity-group[open] > summary::before { content: "▾"; }
+  .entity-count { font-size: 10px; color: var(--muted); margin-left: auto; font-weight: 400; }
+  .entity-group-list { padding-bottom: 4px; }
+  .entity-list-item {
+    padding: 3px 6px 3px 20px;
+    font-size: 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--text);
+    line-height: 1.5;
+  }
+  .entity-list-item:hover { background: #e8ecf0; }
+  .entity-list-item.active { background: var(--accent); color: #fff; }
+  .entity-list-item.wanted { color: var(--muted); font-style: italic; }
+
+  /* ── Main area ──────────────────────────────────────────────────────── */
+  #main {
+    grid-area: main;
+    position: relative;
+    overflow: hidden;
+    min-height: 0;
+    min-width: 0;
+  }
+
+  /* Graph view */
+  #graph-view {
+    position: absolute;
+    inset: 0;
+    display: flex;
+  }
+  #graph-view.hidden { display: none; }
+  #graph-canvas-area {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+  }
+  #graph-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  #graph-error {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--danger);
+    padding: 24px;
+    font-size: 13px;
+  }
+  #zoom-controls {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 10;
+  }
+  #zoom-controls button {
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 6px;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    line-height: 1;
+  }
+  #zoom-controls button:hover { background: #f0f3f6; }
+  #zoom-controls button.fit { font-size: 13px; }
+
+  /* Graph preview panel */
+  #graph-preview {
+    width: 360px;
+    flex-shrink: 0;
+    border-left: 1px solid var(--border);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #graph-preview.hidden { display: none; }
+  #graph-preview-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+  #graph-preview-title {
+    flex: 1;
+    font-size: 12px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+  }
+  #graph-preview-header button {
+    padding: 3px 8px;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    background: var(--bg);
+    cursor: pointer;
+    white-space: nowrap;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+  #graph-preview-header button:hover { background: #f0f3f6; }
+  #graph-preview-scroll {
+    flex: 1;
+    overflow-y: auto;
+  }
+  #graph-preview-inner {
+    padding: 16px 18px 32px;
+  }
+
+  /* Page view */
+  #page-view {
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    background: var(--bg);
+  }
+  #page-view.hidden { display: none; }
+  #page-inner {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 28px 36px 48px;
+  }
+
+  /* Page content typography */
+  #page-inner, #graph-preview-inner { font-size: 14px; }
+  #page-inner .placeholder {
+    color: var(--muted);
+    font-style: italic;
+    margin-top: 32px;
+    font-size: 14px;
+  }
+  #page-inner .meta, #graph-preview-inner .meta {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  #page-inner .meta .badge, #graph-preview-inner .meta .badge {
+    display: inline-block;
+    padding: 1px 7px;
+    border-radius: 4px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    font-weight: 500;
+  }
+  #page-inner h1, #graph-preview-inner h1 { font-size: 22px; margin: 6px 0 16px; line-height: 1.3; }
+  #page-inner h2, #graph-preview-inner h2 { font-size: 16px; margin: 24px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+  #page-inner h3, #graph-preview-inner h3 { font-size: 14px; margin: 16px 0 8px; }
+  #page-inner h4, #graph-preview-inner h4 { font-size: 13px; margin: 12px 0 6px; }
+  #page-inner p, #graph-preview-inner p { font-size: 14px; line-height: 1.65; margin: 0 0 12px; }
+  #page-inner li, #graph-preview-inner li { font-size: 14px; line-height: 1.6; margin-bottom: 4px; }
+  #page-inner ul, #page-inner ol, #graph-preview-inner ul, #graph-preview-inner ol { padding-left: 22px; margin: 0 0 12px; }
+  #page-inner code, #graph-preview-inner code {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 12px;
+    font-family: "SFMono-Regular", Consolas, monospace;
+  }
+  #page-inner pre, #graph-preview-inner pre {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 0 0 14px;
+  }
+  #page-inner pre code, #graph-preview-inner pre code { background: none; border: none; padding: 0; }
+  #page-inner blockquote, #graph-preview-inner blockquote {
+    border-left: 3px solid var(--border);
+    margin: 12px 0;
+    padding: 6px 14px;
+    color: var(--muted);
+    background: var(--panel);
+    border-radius: 0 4px 4px 0;
+  }
+  #page-inner blockquote p, #graph-preview-inner blockquote p { margin: 0; }
+  #page-inner table, #graph-preview-inner table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 0 0 14px;
+    font-size: 13px;
+  }
+  #page-inner th, #page-inner td, #graph-preview-inner th, #graph-preview-inner td {
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    text-align: left;
+  }
+  #page-inner th, #graph-preview-inner th { background: var(--panel); font-weight: 600; }
+  #page-inner tr:nth-child(even) td, #graph-preview-inner tr:nth-child(even) td { background: #fafbfc; }
+  #page-inner a, #graph-preview-inner a { color: var(--accent); text-decoration: none; }
+  #page-inner a:hover, #graph-preview-inner a:hover { text-decoration: underline; }
+  #page-inner a.wikilink, #graph-preview-inner a.wikilink { font-weight: 500; cursor: pointer; }
+  #page-inner a.wikilink.wanted, #graph-preview-inner a.wikilink.wanted { color: var(--danger); border-bottom: 1px dashed var(--danger); }
+  #page-inner .path-label, #graph-preview-inner .path-label { font-size: 11px; color: var(--muted); margin-top: 24px; }
+  #page-inner hr, #graph-preview-inner hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* ── Footer ─────────────────────────────────────────────────────────── */
+  #footer {
+    grid-area: footer;
+    border-top: 1px solid var(--border);
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    font-size: 11px;
+    color: var(--muted);
+    gap: 14px;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <button id="sidebarToggle" title="Toggle sidebar">☰</button>
+    <h1>EHR Research Knowledge Graph</h1>
+    <div class="divider"></div>
+    <div id="view-tabs">
+      <button class="tab active" id="graphTab">Graph</button>
+      <button class="tab" id="pageTab">Page</button>
+    </div>
+    <div id="graph-controls">
+      <label>
+        <input type="checkbox" id="ehrOnly"> EHR-focused only
+      </label>
+      <button id="resetBtn" title="Collapse publications and reset focus">Reset</button>
+    </div>
+    <div class="spacer"></div>
+    <button id="reloadBtn">Reload</button>
+    <button id="doneBtn">Done</button>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sidebar-inner">
+
+      <!-- Search -->
+      <div style="margin-bottom: 4px;">
+        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 6px 2px;">Search</div>
+        <input type="text" id="search-input" placeholder="Find entity by name or slug…" autocomplete="off">
+        <div id="search-results"></div>
+      </div>
+
+      <!-- Entity Types -->
+      <details class="filter-section" open>
+        <summary>Entity types</summary>
+        <div class="section-body" id="typeFilters"></div>
+      </details>
+
+      <!-- Entity directory -->
+      <details class="filter-section" open>
+        <summary>Directory</summary>
+        <div class="section-body" id="entity-directory">
+          <div style="color:var(--muted);font-size:12px;font-style:italic;">Loading…</div>
+        </div>
+      </details>
+
+      <!-- Legend -->
+      <details class="filter-section">
+        <summary>Legend</summary>
+        <div class="section-body">
+          <div class="legend-row"><span class="swatch" style="background:var(--color-person)"></span> Author</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-paper);border:1px solid #7a0019"></span> Publication</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-concept)"></span> Subtopic</div>
+          <div class="legend-note">Select an author or publication to expand its work. Publication–subtopic links appear on selection.</div>
+        </div>
+      </details>
+
+    </div>
+  </div>
+
+  <!-- Main area -->
+  <div id="main">
+
+    <!-- Graph view -->
+    <div id="graph-view">
+      <div id="graph-canvas-area">
+        <div id="graph-canvas"></div>
+        <div id="graph-error" style="display:none"></div>
+        <div id="zoom-controls">
+          <button id="zoomIn" title="Zoom in">+</button>
+          <button id="zoomOut" title="Zoom out">−</button>
+          <button id="zoomFit" class="fit" title="Fit to view">fit</button>
+        </div>
+      </div>
+      <div id="graph-preview" class="hidden">
+        <div id="graph-preview-header">
+          <div id="graph-preview-title">Preview</div>
+          <button id="graph-preview-open" title="Open in Page tab">↗ Full page</button>
+          <button id="graph-preview-close" title="Close preview">✕</button>
+        </div>
+        <div id="graph-preview-scroll">
+          <div id="graph-preview-inner"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page view (default) -->
+    <div id="page-view" class="hidden">
+      <div id="page-inner">
+        <div class="placeholder">Click any node in the graph to view its page, or search above.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div id="footer"><span id="stats">Loading…</span></div>
+
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────────────────────────
+let graphData = { nodes: [], edges: [], stats: {} };
+let nodesById = {};
+let network = null;
+let focusedId = null;
+let activeTypes = new Set(["person", "paper", "project", "method", "concept", "synthesis"]);
+let activeTiers = new Set(["T3", "T2", "T1", "none"]);
+let showWanted = true;
+let hopLimit = 0;
+let currentView = "graph"; // "graph" | "page"
+let physicsFrozen = false;
+
+const COLOR = {
+  person: "#0969da",
+  paper: "#8250df",
+  project: "#fb8500",
+  method: "#1a7f37",
+  concept: "#0a7068",
+  synthesis: "#cf222e",
+};
+
+const SHAPE = {
+  person: "dot",
+  paper: "diamond",
+  project: "box",
+  method: "triangle",
+  concept: "triangleDown",
+  synthesis: "star",
+};
+
+// ─── Bootstrap ──────────────────────────────────────────────────────────────
+if (false) document.addEventListener("DOMContentLoaded", async () => {
+  buildTypeFilters();
+  hookEvents();
+  await reload();
+});
+
+function buildTypeFilters() {
+  const host = document.getElementById("typeFilters");
+  for (const t of ["person", "paper", "project", "method", "concept", "synthesis"]) {
+    const label = document.createElement("label");
+    label.className = "filter";
+    label.innerHTML = `<input type="checkbox" data-type="${t}" checked> <span class="swatch" style="background:${COLOR[t]}"></span> ${t}`;
+    host.appendChild(label);
+  }
+  host.addEventListener("change", e => {
+    if (e.target.matches("input[type=checkbox]")) {
+      const t = e.target.dataset.type;
+      if (e.target.checked) activeTypes.add(t);
+      else activeTypes.delete(t);
+      if (currentView === "graph") render();
+      buildEntityDirectory();
+    }
+  });
+}
+
+function hookEvents() {
+  // Sidebar toggle
+  document.getElementById("sidebarToggle").addEventListener("click", () => {
+    document.getElementById("app").classList.toggle("sidebar-collapsed");
+    if (currentView === "graph" && network) {
+      setTimeout(() => network.redraw(), 220);
+    }
+  });
+
+  // View tabs
+  document.getElementById("graphTab").addEventListener("click", () => switchView("graph"));
+  document.getElementById("pageTab").addEventListener("click", () => switchView("page"));
+
+  // Graph controls
+  const freezeBtn = document.getElementById("freezeBtn");
+  freezeBtn.addEventListener("click", () => {
+    physicsFrozen = !physicsFrozen;
+    if (network) network.setOptions({ physics: { enabled: !physicsFrozen } });
+    freezeBtn.textContent = physicsFrozen ? "Unfreeze" : "Freeze";
+  });
+  document.getElementById("resetBtn").addEventListener("click", () => {
+    focusedId = null;
+    if (currentView === "graph") render();
+  });
+  document.getElementById("showWanted").addEventListener("change", e => {
+    showWanted = e.target.checked;
+    if (currentView === "graph") render();
+  });
+  document.getElementById("hopRange").addEventListener("input", e => {
+    hopLimit = parseInt(e.target.value, 10);
+    document.getElementById("hopLabel").textContent = hopLimit === 0 ? "all" : `${hopLimit} hop${hopLimit > 1 ? "s" : ""}`;
+    if (currentView === "graph") render();
+  });
+
+  // Zoom controls
+  document.getElementById("zoomIn").addEventListener("click", () => zoomBy(1.25));
+  document.getElementById("zoomOut").addEventListener("click", () => zoomBy(1 / 1.25));
+  document.getElementById("zoomFit").addEventListener("click", () => {
+    if (network) network.fit({ animation: { duration: 300, easingFunction: "easeInOutQuad" } });
+  });
+
+  // Graph preview panel
+  document.getElementById("graph-preview-close").addEventListener("click", hideGraphPreview);
+  document.getElementById("graph-preview-open").addEventListener("click", () => {
+    if (focusedId) {
+      showPage(focusedId);
+      switchView("page");
+    }
+  });
+
+  // Other topbar
+  document.getElementById("reloadBtn").addEventListener("click", reload);
+  document.getElementById("doneBtn").addEventListener("click", shutdown);
+
+  // Search
+  document.getElementById("search-input").addEventListener("input", updateSearchResults);
+  document.getElementById("search-input").addEventListener("keydown", e => {
+    if (e.key === "Escape") clearSearch();
+  });
+  document.getElementById("tierFilters").addEventListener("change", e => {
+    if (e.target.matches("input[type=checkbox]")) {
+      const t = e.target.dataset.tier;
+      if (e.target.checked) activeTiers.add(t);
+      else activeTiers.delete(t);
+      if (currentView === "graph") render();
+      buildEntityDirectory();
+    }
+  });
+}
+
+// ─── View switching ─────────────────────────────────────────────────────────
+
+function switchView(view) {
+  currentView = view;
+  const graphView = document.getElementById("graph-view");
+  const pageView = document.getElementById("page-view");
+  const graphTab = document.getElementById("graphTab");
+  const pageTab = document.getElementById("pageTab");
+  const graphControls = document.getElementById("graph-controls");
+
+  if (view === "graph") {
+    graphView.classList.remove("hidden");
+    pageView.classList.add("hidden");
+    graphTab.classList.add("active");
+    pageTab.classList.remove("active");
+    graphControls.classList.add("visible");
+    // Initialize or redraw graph
+    if (!network) {
+      render();
+    } else {
+      setTimeout(() => {
+        network.redraw();
+        if (focusedId) {
+          try { network.focus(focusedId, { scale: 1.2, animation: true }); } catch (_) {}
+        }
+      }, 50);
+    }
+  } else {
+    graphView.classList.add("hidden");
+    pageView.classList.remove("hidden");
+    pageTab.classList.add("active");
+    graphTab.classList.remove("active");
+    graphControls.classList.remove("visible");
+  }
+}
+
+// ─── Data loading ────────────────────────────────────────────────────────────
+
+function reload() {
+  graphData = window.GRAPH || { nodes: [], edges: [], stats: { total_nodes: 0, total_edges: 0, wanted: 0, by_type: {} } };
+  nodesById = {};
+  for (const n of graphData.nodes) nodesById[n.id] = n;
+  document.getElementById("stats").textContent =
+    `${graphData.stats.total_nodes} nodes · ${graphData.stats.total_edges} edges · ${graphData.stats.wanted} wanted` +
+    "  ·  " +
+    Object.entries(graphData.stats.by_type).map(([k, v]) => `${k}:${v}`).join(" · ");
+  // Only render graph if it's the active view
+  if (currentView === "graph") render();
+  buildEntityDirectory();
+}
+
+// ─── Entity directory ────────────────────────────────────────────────────────
+
+const TYPE_ORDER = ["person", "paper", "project", "method", "concept", "synthesis"];
+
+function buildEntityDirectory() {
+  const container = document.getElementById("entity-directory");
+  if (!container || !graphData.nodes.length) return;
+
+  // Group nodes by type, applying current filters, excluding wanted (no page)
+  const groups = {};
+  for (const n of graphData.nodes) {
+    if (!n.exists) continue; // skip wanted nodes — no page to show
+    if (!nodePassesFilters(n)) continue;
+    (groups[n.type] = groups[n.type] || []).push(n);
+  }
+
+  // Sort each group alphabetically
+  for (const type in groups) {
+    groups[type].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  container.innerHTML = "";
+
+  for (const type of TYPE_ORDER) {
+    const items = groups[type];
+    if (!items || !items.length) continue;
+
+    const details = document.createElement("details");
+    details.className = "entity-group";
+    details.open = true; // default open; user can collapse
+
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span class="swatch" style="background:${COLOR[type]};border-radius:50%;display:inline-block;width:8px;height:8px;flex-shrink:0"></span>${type}<span class="entity-count">${items.length}</span>`;
+    details.appendChild(summary);
+
+    const list = document.createElement("div");
+    list.className = "entity-group-list";
+
+    for (const n of items) {
+      const item = document.createElement("div");
+      item.className = "entity-list-item" + (n.id === focusedId ? " active" : "");
+      item.textContent = n.label;
+      item.dataset.id = n.id;
+      item.title = n.label;
+      item.addEventListener("click", () => selectNode(n.id));
+      list.appendChild(item);
+    }
+
+    details.appendChild(list);
+    container.appendChild(details);
+  }
+}
+
+function updateDirectoryActiveItem() {
+  document.querySelectorAll(".entity-list-item").forEach(el => {
+    el.classList.toggle("active", el.dataset.id === focusedId);
+  });
+}
+
+// ─── Search ─────────────────────────────────────────────────────────────────
+
+function updateSearchResults() {
+  const q = document.getElementById("search-input").value.trim().toLowerCase();
+  const container = document.getElementById("search-results");
+  container.innerHTML = "";
+  if (!q) { container.style.display = "none"; return; }
+
+  const matches = graphData.nodes
+    .filter(n => `${n.label} ${n.slug}`.toLowerCase().includes(q))
+    .slice(0, 30);
+
+  if (!matches.length) { container.style.display = "none"; return; }
+
+  for (const n of matches) {
+    const item = document.createElement("div");
+    item.className = "search-result-item";
+
+    const dot = document.createElement("span");
+    dot.className = "search-result-dot";
+    dot.style.background = COLOR[n.type] || "#888";
+
+    const label = document.createElement("span");
+    label.className = "search-result-label";
+    label.textContent = n.label;
+
+    const type = document.createElement("span");
+    type.className = "search-result-type";
+    type.textContent = n.type;
+
+    item.appendChild(dot);
+    item.appendChild(label);
+    item.appendChild(type);
+    item.addEventListener("click", () => selectNode(n.id));
+    container.appendChild(item);
+  }
+  container.style.display = "block";
+}
+
+function clearSearch() {
+  document.getElementById("search-input").value = "";
+  const container = document.getElementById("search-results");
+  container.innerHTML = "";
+  container.style.display = "none";
+}
+
+function selectNode(id) {
+  clearSearch();
+  focusedId = id;
+  updateDirectoryActiveItem();
+  if (currentView === "graph") {
+    showGraphPreview(id);
+  } else {
+    showPage(id);
+    switchView("page");
+    if (network) { try { network.selectNodes([id]); } catch (_) {} }
+  }
+}
+
+// ─── Graph rendering ─────────────────────────────────────────────────────────
+
+function nodePassesFilters(node) {
+  if (!activeTypes.has(node.type)) return false;
+  if (!showWanted && !node.exists) return false;
+  if (node.type === "person") {
+    const tier = node.tier || "none";
+    if (!activeTiers.has(tier)) return false;
+  }
+  return true;
+}
+
+function neighborhoodNodes(centerId, hops) {
+  const adj = {};
+  for (const e of graphData.edges) {
+    (adj[e.source] = adj[e.source] || []).push(e.target);
+    (adj[e.target] = adj[e.target] || []).push(e.source);
+  }
+  const visited = new Set([centerId]);
+  let frontier = [centerId];
+  for (let i = 0; i < hops; i++) {
+    const next = [];
+    for (const id of frontier) {
+      for (const nbr of (adj[id] || [])) {
+        if (!visited.has(nbr)) { visited.add(nbr); next.push(nbr); }
+      }
+    }
+    frontier = next;
+  }
+  return visited;
+}
+
+function render() {
+  if (!graphData.nodes.length) return;
+
+  if (typeof vis === "undefined") {
+    const err = document.getElementById("graph-error");
+    err.style.display = "flex";
+    err.textContent = "vis-network failed to load. Confirm vis-network.min.js is beside this page, then click Reload.";
+    return;
+  }
+  document.getElementById("graph-error").style.display = "none";
+
+  let visibleIds = new Set();
+  if (focusedId && hopLimit > 0) {
+    visibleIds = neighborhoodNodes(focusedId, hopLimit);
+    visibleIds = new Set([...visibleIds].filter(id => nodePassesFilters(nodesById[id])));
+    visibleIds.add(focusedId);
+  } else {
+    for (const n of graphData.nodes) {
+      if (nodePassesFilters(n)) visibleIds.add(n.id);
+    }
+  }
+
+  const visNodes = [];
+  for (const id of visibleIds) visNodes.push(toVisNode(nodesById[id]));
+
+  const visEdges = [];
+  for (const e of graphData.edges) {
+    if (visibleIds.has(e.source) && visibleIds.has(e.target)) {
+      visEdges.push({
+        from: e.source,
+        to: e.target,
+        label: e.section || "",
+        font: { size: 9, color: "#8b949e", strokeWidth: 0, align: "middle" },
+        color: { color: "#cccccc" },
+        smooth: { type: "dynamic" },
+        arrows: { to: { enabled: true, scaleFactor: 0.4 } },
+      });
+    }
+  }
+
+  if (network) network.destroy();
+  physicsFrozen = false;
+  document.getElementById("freezeBtn").textContent = "Freeze";
+
+  const container = document.getElementById("graph-canvas");
+  network = new vis.Network(
+    container,
+    { nodes: new vis.DataSet(visNodes), edges: new vis.DataSet(visEdges) },
+    {
+      physics: {
+        solver: "forceAtlas2Based",
+        forceAtlas2Based: { gravitationalConstant: -50, springLength: 110, avoidOverlap: 0.5 },
+        stabilization: { iterations: 250 },
+      },
+      interaction: { hover: true, tooltipDelay: 200, multiselect: false, dragNodes: true },
+    }
+  );
+
+  network.on("dragEnd", params => {
+    if (params.nodes.length > 0) {
+      const nodeId = params.nodes[0];
+      const pos = network.getPositions(nodeId)[nodeId];
+      network.body.data.nodes.update({ id: nodeId, fixed: { x: true, y: true }, x: pos.x, y: pos.y });
+    }
+  });
+
+  network.on("click", params => {
+    if (params.nodes.length === 0) { network.startSimulation(); return; }
+    const id = params.nodes[0];
+    focusedId = id;
+    network.stopSimulation();
+    showGraphPreview(id);
+    updateDirectoryActiveItem();
+  });
+}
+
+function toVisNode(n) {
+  const baseColor = COLOR[n.type] || "#888";
+  let size = 12;
+  if (n.type === "person" || n.type === "paper") {
+    if (n.tier === "T3") size = 22;
+    else if (n.tier === "T2") size = 16;
+    else if (n.tier === "T1") size = 11;
+    else size = 10;
+  } else {
+    const inbound = (n.metadata && n.metadata.inbound) || 0;
+    size = Math.min(28, 10 + Math.sqrt(inbound) * 4);
+  }
+
+  const node = {
+    id: n.id,
+    label: n.label,
+    title: buildTooltip(n),
+    shape: SHAPE[n.type] || "dot",
+    size,
+    font: { color: "#1f2328", size: 12 },
+  };
+
+  if (n.exists) {
+    node.color = { background: baseColor, border: shadeDarker(baseColor) };
+  } else {
+    node.color = { background: "#ffffff", border: baseColor };
+    node.borderWidth = 2;
+    node.shapeProperties = { borderDashes: [4, 4] };
+    node.font = { color: baseColor, size: 11 };
+  }
+
+  if (n.id === focusedId) {
+    node.borderWidth = 3;
+    node.color = { ...(node.color || {}), border: "#000000" };
+  }
+  return node;
+}
+
+function buildTooltip(n) {
+  const parts = [n.label];
+  if (n.tier) parts.push(`tier: ${n.tier}`);
+  if (!n.exists) parts.push("(wanted — does not exist)");
+  if (n.summary) parts.push(n.summary);
+  if (n.metadata && n.metadata.inbound) parts.push(`inbound: ${n.metadata.inbound}`);
+  return parts.join("\n");
+}
+
+function zoomBy(factor) {
+  if (!network) return;
+  const current = network.getScale();
+  network.moveTo({ scale: current * factor, animation: { duration: 200, easingFunction: "easeInOutQuad" } });
+}
+
+function shadeDarker(hex) {
+  const m = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!m) return hex;
+  const r = Math.max(0, parseInt(m[1], 16) - 40);
+  const g = Math.max(0, parseInt(m[2], 16) - 40);
+  const b = Math.max(0, parseInt(m[3], 16) - 40);
+  return "#" + [r, g, b].map(x => x.toString(16).padStart(2, "0")).join("");
+}
+
+// ─── Graph preview panel ─────────────────────────────────────────────────────
+
+function showGraphPreview(id) {
+  const node = nodesById[id];
+  if (!node) return;
+  const panel = document.getElementById("graph-preview");
+  panel.classList.remove("hidden");
+  document.getElementById("graph-preview-title").textContent = node.label;
+  showPage(id, document.getElementById("graph-preview-inner"));
+  if (network) {
+    try {
+      network.selectNodes([id]);
+      network.focus(id, { scale: 1.4, animation: { duration: 400, easingFunction: "easeInOutQuad" } });
+    } catch (_) {}
+  }
+  setTimeout(() => network && network.redraw(), 10);
+}
+
+function hideGraphPreview() {
+  document.getElementById("graph-preview").classList.add("hidden");
+  setTimeout(() => network && network.redraw(), 10);
+}
+
+// ─── Page rendering ──────────────────────────────────────────────────────────
+
+function showPage(id, inner) {
+  if (!inner) inner = document.getElementById("page-inner");
+  const node = nodesById[id];
+  if (!node) return;
+
+  const metadata = node.metadata || {};
+  const inbound = metadata.inbound || 0;
+  const outbound = graphData.edges.filter(edge => edge.source === id).length;
+  const degree = inbound + outbound;
+  let details = "";
+
+  if (node.type === "paper") {
+    const doiUrl = "https:" + "//doi.org/" + encodeURIComponent(metadata.doi || "");
+    const doi = metadata.doi
+      ? `<p><strong>DOI:</strong> <a href="${doiUrl}" target="_blank" rel="noopener">${escapeHtml(metadata.doi)}</a></p>`
+      : "";
+    const subtopics = Array.isArray(metadata.subtopics) && metadata.subtopics.length
+      ? metadata.subtopics.map(escapeHtml).join(", ")
+      : "None";
+    details = `
+      <p><strong>Title:</strong> ${escapeHtml(metadata.title || node.summary || node.label)}</p>
+      <p><strong>Venue:</strong> ${escapeHtml(metadata.venue || "Not available")}</p>
+      <p><strong>Year:</strong> ${escapeHtml(metadata.year || "Not available")}</p>
+      ${doi}
+      <p><strong>EHR role:</strong> ${escapeHtml(metadata.ehr_role || "Not available")}</p>
+      <p><strong>Subtopics:</strong> ${subtopics}</p>`;
+  } else {
+    details = `
+      <p>${escapeHtml(node.summary || node.type)}</p>
+      <p><strong>Inbound:</strong> ${inbound}</p>
+      <p><strong>Degree:</strong> ${degree}</p>`;
+  }
+
+  inner.innerHTML = `
+    <div class="meta">
+      <span class="badge" style="color:${COLOR[node.type] || "#888"}">${escapeHtml(node.type)}</span>
+      <span class="badge">inbound ${inbound}</span>
+    </div>
+    <h1>${escapeHtml(node.label)}</h1>
+    ${details}`;
+
+  if (inner === document.getElementById("page-inner")) {
+    document.getElementById("page-view").scrollTop = 0;
+  } else {
+    document.getElementById("graph-preview-scroll").scrollTop = 0;
+  }
+}
+
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;",
+  }[c]));
+}
+
+function shutdown() {
+  document.getElementById("stats").textContent = "Local viewer remains open.";
+}
+</script>
+<script type="module">
+// Presentation layout: topics form the quiet center, authors are the red ring,
+// and publications are deliberately expanded one author at a time.
+const COLORS = { person: "#cc0000", paper: "#ffffff", concept: "#b9d9ee" };
+const TYPE_LABELS = { person: "Author", paper: "Publication", concept: "Subtopic" };
+let graph = { nodes: [], edges: [], stats: {} };
+let byId = {};
+let network;
+let focusedId = null;
+let expandedAuthorIds = new Set();
+let activeTypes = new Set(["person", "paper", "concept"]);
+let ehrOnly = false;
+let currentView = "graph";
+
+const paperId = n => n && n.type === "paper";
+const personId = n => n && n.type === "person";
+const conceptId = n => n && n.type === "concept";
+
+function reload() {
+  graph = window.GRAPH || { nodes: [], edges: [], stats: {} };
+  byId = Object.fromEntries(graph.nodes.map(n => [n.id, n]));
+  document.getElementById("stats").textContent =
+    `${graph.stats.total_nodes || 0} publications map · ${graph.nodes.filter(paperId).length} publications · ${graph.nodes.filter(personId).length} authors`;
+  render();
+  buildDirectory();
+}
+
+function primaryAuthorId(paper) {
+  const slug = paper.metadata && paper.metadata.primary_author;
+  if (slug && byId[`person:${slug}`]) return `person:${slug}`;
+  const anchor = graph.edges.find(e => e.section === "author" && e.target === paper.id);
+  return anchor ? anchor.source : null;
+}
+
+function paperPasses(paper) {
+  return paperId(paper) && activeTypes.has("paper") && (!ehrOnly || paper.metadata.ehr_relevant === true);
+}
+
+function layoutModel() {
+  const papers = graph.nodes.filter(paperPasses);
+  const allowedPaperIds = new Set(papers.map(n => n.id));
+  const authors = graph.nodes.filter(personId).filter(author =>
+    activeTypes.has("person") && papers.some(p => graph.edges.some(e => e.section === "author" && e.source === author.id && e.target === p.id))
+  );
+  const authorIds = new Set(authors.map(n => n.id));
+  const topics = graph.nodes.filter(conceptId).filter(topic =>
+    activeTypes.has("concept") && papers.some(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id))
+  );
+  const topicIds = new Set(topics.map(n => n.id));
+  const primaryPapers = new Map(authors.map(a => [a.id, []]));
+  for (const paper of papers) {
+    const author = primaryAuthorId(paper);
+    if (primaryPapers.has(author)) primaryPapers.get(author).push(paper);
+  }
+  return { papers, allowedPaperIds, authors, authorIds, topics, topicIds, primaryPapers };
+}
+
+function polar(angle, radius) {
+  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+}
+
+function makeNode(data, x, y, extra = {}) {
+  return {
+    id: data.id, label: data.label, x, y, fixed: { x: true, y: true },
+    shape: "dot", title: tooltip(data), font: { color: "#1f2328", size: 12, face: "Arial" },
+    ...extra,
+  };
+}
+
+function tooltip(node) {
+  if (node.kind === "bundle") return `${node.count} publications\nClick to expand`;
+  const details = [node.label];
+  if (node.type === "paper") details.push(node.metadata.ehr_relevant ? "EHR-focused" : "Not EHR-focused");
+  if (node.summary) details.push(node.summary);
+  return details.join("\n");
+}
+
+function render() {
+  if (!graph.nodes.length || typeof vis === "undefined") return;
+  const model = layoutModel();
+  const nodes = [];
+  const positions = new Map();
+  const topicRadius = 165;
+  const authorRadius = 390;
+
+  model.topics.sort((a, b) => a.label.localeCompare(b.label)).forEach((topic, i, all) => {
+    const angle = -Math.PI / 2 + i * Math.PI * 2 / Math.max(1, all.length);
+    const point = polar(angle, topicRadius);
+    positions.set(topic.id, { ...point, angle });
+    const count = model.papers.filter(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)).length;
+    nodes.push(makeNode(topic, point.x, point.y, {
+      size: Math.min(30, 13 + Math.sqrt(count) * 1.4),
+      color: { background: COLORS.concept, border: "#4d86a8" }, borderWidth: 1.5,
+      font: { color: "#16384d", size: 12, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
+    }));
+  });
+
+  model.authors.sort((a, b) => a.label.localeCompare(b.label)).forEach((author, i, all) => {
+    const angle = -Math.PI / 2 + i * Math.PI * 2 / Math.max(1, all.length);
+    const point = polar(angle, authorRadius);
+    positions.set(author.id, { ...point, angle });
+    const count = model.primaryPapers.get(author.id).length;
+    nodes.push(makeNode(author, point.x, point.y, {
+      size: Math.min(32, 15 + Math.sqrt(count) * 1.7),
+      color: { background: COLORS.person, border: "#7a0019" }, borderWidth: 2,
+      font: { color: "#4b0010", size: 13, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
+    }));
+    if (!activeTypes.has("paper") || !count) return;
+    const bundle = polar(angle, authorRadius + 92);
+    const bundleId = `bundle:${author.id}`;
+    nodes.push(makeNode({ id: bundleId, label: `${count}`, kind: "bundle", count }, bundle.x, bundle.y, {
+      size: Math.min(29, 11 + Math.sqrt(count) * 2.2),
+      color: { background: "#ffffff", border: "#cc0000" }, borderWidth: 2,
+      font: { color: "#7a0019", size: 12, face: "Arial" },
+    }));
+
+    if (!expandedAuthorIds.has(author.id)) return;
+    const publications = model.primaryPapers.get(author.id).sort((a, b) => a.label.localeCompare(b.label));
+    const rows = Math.ceil(publications.length / 12);
+    publications.forEach((paper, j) => {
+      const row = Math.floor(j / 12);
+      const inRow = Math.min(12, publications.length - row * 12);
+      const col = j % 12;
+      const spread = Math.min(1.15, 0.12 + inRow * 0.09);
+      const offset = inRow === 1 ? 0 : (col / (inRow - 1) - 0.5) * spread;
+      const p = polar(angle + offset, authorRadius + 145 + row * 62);
+      positions.set(paper.id, { ...p, angle: angle + offset });
+      nodes.push(makeNode(paper, p.x, p.y, {
+        size: 8, color: { background: COLORS.paper, border: "#9a1b2f" }, borderWidth: 1.4,
+        font: { color: "#303030", size: 10, face: "Arial", strokeWidth: 4, strokeColor: "#ffffff" },
+      }));
+    });
+  });
+
+  const visibleIds = new Set(nodes.map(n => n.id));
+  const edges = [];
+  for (const author of model.authors) {
+    for (const topic of model.topics) {
+      const linked = model.papers.some(p =>
+        graph.edges.some(e => e.section === "author" && e.source === author.id && e.target === p.id) &&
+        graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)
+      );
+      if (!linked) continue;
+      const highlighted = focusedId === author.id || focusedId === topic.id;
+      edges.push({ from: author.id, to: topic.id, color: { color: highlighted ? "rgba(77,134,168,.58)" : "rgba(77,134,168,.16)" }, width: highlighted ? 1.5 : .55, smooth: false });
+    }
+  }
+  for (const edge of graph.edges) {
+    if (edge.section !== "author" || !visibleIds.has(edge.source) || !visibleIds.has(edge.target)) continue;
+    const isAnchor = primaryAuthorId(byId[edge.target]) === edge.source;
+    edges.push({ from: edge.source, to: edge.target, color: { color: isAnchor ? "rgba(204,0,0,.72)" : "rgba(70,70,70,.24)" }, width: isAnchor ? 1.4 : .65, smooth: false });
+  }
+  const selectionShowsTopicEdges = focusedId && (paperId(byId[focusedId]) || conceptId(byId[focusedId]));
+  if (selectionShowsTopicEdges) {
+    for (const edge of graph.edges) {
+      if (edge.section !== "subtopic" || !visibleIds.has(edge.source) || !visibleIds.has(edge.target)) continue;
+      if (focusedId !== edge.source && focusedId !== edge.target) continue;
+      edges.push({ from: edge.source, to: edge.target, color: { color: "rgba(77,134,168,.8)" }, width: 1.25, dashes: [3, 4], smooth: false });
+    }
+  }
+
+  if (network) network.destroy();
+  network = new vis.Network(document.getElementById("graph-canvas"), { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, {
+    physics: false,
+    interaction: { hover: true, tooltipDelay: 120, dragNodes: false, multiselect: false },
+  });
+  network.on("click", params => {
+    if (!params.nodes.length) return;
+    const id = params.nodes[0];
+    if (id.startsWith("bundle:")) return toggleAuthor(id.slice(7));
+    if (personId(byId[id])) return toggleAuthor(id);
+    selectNode(id);
+  });
+  network.fit({ animation: false, padding: 0.12 });
+}
+
+function toggleAuthor(authorId) {
+  focusedId = authorId;
+  expandedAuthorIds = expandedAuthorIds.has(authorId) ? new Set() : new Set([authorId]);
+  render(); buildDirectory(); showPreview(authorId);
+}
+
+function selectNode(id) {
+  const node = byId[id];
+  if (!node) return;
+  if (paperId(node)) {
+    const author = primaryAuthorId(node);
+    if (author) expandedAuthorIds = new Set([author]);
+  }
+  focusedId = id;
+  render(); buildDirectory(); showPreview(id);
+}
+
+function currentDirectoryNodes() {
+  const model = layoutModel();
+  return [...model.authors, ...model.topics, ...model.papers];
+}
+
+function buildDirectory() {
+  const container = document.getElementById("entity-directory");
+  const groups = {};
+  for (const node of currentDirectoryNodes()) {
+    if (!activeTypes.has(node.type)) continue;
+    (groups[node.type] ||= []).push(node);
+  }
+  container.innerHTML = "";
+  for (const type of ["person", "paper", "concept"]) {
+    const items = (groups[type] || []).sort((a, b) => a.label.localeCompare(b.label));
+    if (!items.length) continue;
+    const details = document.createElement("details"); details.className = "entity-group";
+    details.open = type !== "paper";
+    const summary = document.createElement("summary");
+    summary.innerHTML = `<span class="swatch" style="background:${COLORS[type]};${type === "paper" ? "border:1px solid #7a0019" : ""}"></span>${TYPE_LABELS[type]}<span class="entity-count">${items.length}</span>`;
+    details.append(summary);
+    const list = document.createElement("div"); list.className = "entity-group-list";
+    for (const node of items) {
+      const item = document.createElement("div");
+      item.className = "entity-list-item" + (node.id === focusedId ? " active" : "");
+      item.textContent = node.label; item.title = node.label;
+      item.addEventListener("click", () => personId(node) ? toggleAuthor(node.id) : selectNode(node.id)); list.append(item);
+    }
+    details.append(list); container.append(details);
+  }
+}
+
+function updateSearch() {
+  const q = document.getElementById("search-input").value.trim().toLowerCase();
+  const host = document.getElementById("search-results"); host.innerHTML = "";
+  if (!q) { host.style.display = "none"; return; }
+  const matches = currentDirectoryNodes().filter(n => `${n.label} ${n.slug}`.toLowerCase().includes(q)).slice(0, 30);
+  for (const node of matches) {
+    const item = document.createElement("div"); item.className = "search-result-item";
+    item.innerHTML = `<span class="search-result-dot" style="background:${COLORS[node.type]}"></span><span class="search-result-label"></span><span class="search-result-type">${TYPE_LABELS[node.type]}</span>`;
+    item.querySelector(".search-result-label").textContent = node.label;
+    item.addEventListener("click", () => { document.getElementById("search-input").value = ""; host.style.display = "none"; selectNode(node.id); });
+    host.append(item);
+  }
+  host.style.display = matches.length ? "block" : "none";
+}
+
+function showPreview(id) {
+  const node = byId[id]; if (!node) return;
+  document.getElementById("graph-preview-title").textContent = node.label;
+  document.getElementById("graph-preview").classList.remove("hidden");
+  showPage(id, document.getElementById("graph-preview-inner"));
+}
+
+function showPage(id, host = document.getElementById("page-inner")) {
+  const node = byId[id]; if (!node) return;
+  const metadata = node.metadata || {};
+  const color = COLORS[node.type];
+  let details;
+  if (paperId(node)) {
+    const doi = metadata.doi ? `<p><strong>DOI:</strong> <a href="https://doi.org/${encodeURIComponent(metadata.doi)}" target="_blank" rel="noopener">${escapeHtml(metadata.doi)}</a></p>` : "";
+    details = `<p><strong>Title:</strong> ${escapeHtml(metadata.title || node.summary)}</p><p><strong>Venue:</strong> ${escapeHtml(metadata.venue || "Not available")}</p><p><strong>Year:</strong> ${escapeHtml(metadata.year || "Not available")}</p>${doi}<p><strong>EHR role:</strong> ${escapeHtml(metadata.ehr_role || "Not available")}</p><p><strong>Subtopics:</strong> ${escapeHtml((metadata.subtopics || []).join(", ") || "None")}</p>`;
+  } else if (personId(node)) {
+    const count = layoutModel().primaryPapers.get(node.id)?.length || 0;
+    details = `<p>${escapeHtml(node.summary || "Author")}</p><p><strong>Primary display anchor for:</strong> ${count} publication${count === 1 ? "" : "s"}</p><p>Click the author circle to expand or collapse these publications.</p>`;
+  } else {
+    const count = layoutModel().papers.filter(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === node.id)).length;
+    details = `<p>Publications are connected to this subtopic only when a publication or subtopic is selected.</p><p><strong>Tagged publications:</strong> ${count}</p>`;
+  }
+  host.innerHTML = `<div class="meta"><span class="badge" style="color:${color}">${TYPE_LABELS[node.type]}</span></div><h1>${escapeHtml(node.label)}</h1>${details}`;
+}
+
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]); }
+
+function switchView(view) {
+  currentView = view;
+  document.getElementById("graph-view").classList.toggle("hidden", view !== "graph");
+  document.getElementById("page-view").classList.toggle("hidden", view !== "page");
+  document.getElementById("graphTab").classList.toggle("active", view === "graph");
+  document.getElementById("pageTab").classList.toggle("active", view === "page");
+  document.getElementById("graph-controls").classList.toggle("visible", view === "graph");
+  if (view === "graph" && network) setTimeout(() => { network.redraw(); network.fit({ animation: false, padding: .12 }); }, 30);
+}
+
+function init() {
+  const filterHost = document.getElementById("typeFilters");
+  for (const type of ["person", "paper", "concept"]) {
+    const label = document.createElement("label"); label.className = "filter";
+    label.innerHTML = `<input type="checkbox" data-type="${type}" checked><span class="swatch" style="background:${COLORS[type]};${type === "paper" ? "border:1px solid #7a0019" : ""}"></span>${TYPE_LABELS[type]}`;
+    filterHost.append(label);
+  }
+  filterHost.addEventListener("change", event => { const type = event.target.dataset.type; if (!type) return; event.target.checked ? activeTypes.add(type) : activeTypes.delete(type); render(); buildDirectory(); });
+  document.getElementById("ehrOnly").addEventListener("change", event => { ehrOnly = event.target.checked; focusedId = null; expandedAuthorIds.clear(); render(); buildDirectory(); document.getElementById("graph-preview").classList.add("hidden"); });
+  document.getElementById("resetBtn").addEventListener("click", () => { focusedId = null; expandedAuthorIds.clear(); render(); buildDirectory(); document.getElementById("graph-preview").classList.add("hidden"); });
+  document.getElementById("search-input").addEventListener("input", updateSearch);
+  document.getElementById("graph-preview-close").addEventListener("click", () => document.getElementById("graph-preview").classList.add("hidden"));
+  document.getElementById("graph-preview-open").addEventListener("click", () => { if (!focusedId) return; showPage(focusedId); switchView("page"); });
+  document.getElementById("graphTab").addEventListener("click", () => switchView("graph"));
+  document.getElementById("pageTab").addEventListener("click", () => switchView("page"));
+  document.getElementById("sidebarToggle").addEventListener("click", () => { document.getElementById("app").classList.toggle("sidebar-collapsed"); setTimeout(() => network && network.fit({ animation: false, padding: .12 }), 220); });
+  document.getElementById("zoomIn").addEventListener("click", () => network && network.moveTo({ scale: network.getScale() * 1.2, animation: { duration: 180 } }));
+  document.getElementById("zoomOut").addEventListener("click", () => network && network.moveTo({ scale: network.getScale() / 1.2, animation: { duration: 180 } }));
+  document.getElementById("zoomFit").addEventListener("click", () => network && network.fit({ animation: { duration: 220 }, padding: .12 }));
+  document.getElementById("reloadBtn").addEventListener("click", reload);
+  document.getElementById("doneBtn").addEventListener("click", () => { document.getElementById("stats").textContent = "Local viewer remains open."; });
+  switchView("graph");
+  reload();
+}
+
+init();
+</script>
+</body>
+</html>

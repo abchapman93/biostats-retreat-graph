@@ -1,0 +1,169 @@
+# Retreat EHR graph — round-2 author disambiguation registry
+# Review note: common-name resolutions for xuan-wang, yidan-zhang, yue-zhang,
+# and ravinder-singh should be human-checked before merge.
+
+authors:
+  - slug: christian-dalton
+    name: "Christian Dalton"
+    aliases: ["Christian D. Dalton", "C. Dalton", "Christian Dalton"]
+    role: student
+    orcid: null
+    openalex_author_id: "A5128324656"
+    faculty_page_url: null
+    works_count: 2
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences current-student listing identifies
+      Christian Dalton as a Biostatistics student with biosurveillance, machine learning,
+      longitudinal-analysis, NLP, and causal-inference interests. OpenAlex search returned
+      one Utah/VA-linked Christian Dalton record, A5128324656, with last-known institutions
+      University of Utah and VA Salt Lake City Healthcare System and topical clusters in
+      disease surveillance, biomedical text mining, and machine learning in healthcare,
+      matching the Utah profile. Rejected same-name records included a UCL mental-health
+      scholar and multiple engineering/materials authors.
+
+  - slug: julia-bohman
+    name: "Julia Bohman"
+    aliases: ["Julia Bohman", "J. Bohman", "Julia Bohman BS"]
+    role: student
+    orcid: null
+    openalex_author_id: "A5006524756"
+    faculty_page_url: null
+    works_count: 5
+    status: resolved
+    evidence: >
+      University of Utah Population Health Sciences current-student listing identifies
+      Julia Bohman as a Biostatistics student with survival-analysis, machine-learning,
+      EHR-data, and network-analysis interests. OpenAlex search returned a single Julia
+      Bohman record, A5006524756, with repeated University of Utah and VA Salt Lake City
+      affiliations and health-data topics. An Oxford/OFID abstract snippet for "SARS-CoV-2
+      Transmission in Utah Nursing Homes" lists Julia Bohman, BS, at the University of Utah,
+      consistent with this profile.
+
+  - slug: yidan-zhang
+    name: "Yidan Zhang"
+    aliases: ["Yidan Zhang", "Y. Zhang"]
+    role: student
+    orcid: null
+    openalex_author_id: "A5134057794"
+    faculty_page_url: null
+    works_count: 1
+    status: resolved
+    evidence: >
+      Daniel Scharfstein's current-students page names Yidan Zhang as a current Utah PhD
+      student, and a Society for Causal Inference abstract search page shows Yidan Zhang
+      presenting "The Self-Masking Model for Imputing Missing Electronic Health Record Data"
+      with Daniel Scharfstein on Intermountain EHR data. OpenAlex institution-filtered
+      search returned one Utah-linked Yidan Zhang record, A5134057794, with a single 2026
+      University of Utah paper. This remains a common-name case, but the Utah student
+      listing plus exact-institution OpenAlex match make the ID usable pending human review.
+
+  - slug: yongjun-lee
+    name: "Yongjun Lee"
+    aliases: ["Yongjun Lee", "Y. Lee"]
+    role: student
+    orcid: null
+    openalex_author_id: null
+    faculty_page_url: null
+    works_count: 0
+    status: none
+    evidence: >
+      University of Utah Population Health Sciences current-student listing identifies
+      Yongjun Lee as a Biostatistics PhD student with causal-inference, semiparametric,
+      dynamic-treatment-regime, and clinical-trial interests. A DELPHI symposium page and
+      LinkedIn snippet also place him at the University of Utah. OpenAlex search returned
+      only unrelated same-name records in engineering, hepatology, concrete, and Korean
+      materials science, and an institution-filtered University of Utah search returned
+      zero Yongjun Lee author records. This is consistent with a student who currently has
+      no indexed OpenAlex publications under the Utah affiliation.
+
+  - slug: ravinder-singh
+    name: "Ravinder Singh"
+    aliases: ["Ravi Singh", "Ravinder Singh", "R. Singh"]
+    role: student
+    orcid: "0000-0002-7221-8557"
+    openalex_author_id: "A5072258007"
+    faculty_page_url: null
+    works_count: 56
+    status: resolved
+    evidence: >
+      User-reviewed decision (2026-08-20): OpenAlex A5072258007 conflates more than one
+      researcher, so it must not be used as a complete author corpus. Retain only three
+      verified diabetes papers coauthored with advisor Jincheng Shen: "Comparative
+      effectiveness of insulin glargine, glucagon-like peptide-1 receptor agonists and
+      sodium-glucose cotransporter-2 inhibitors in veterans with type 2 diabetes"
+      (W4406992231); "Glycemic therapies and the risk of gastrointestinal adverse events
+      in veterans with type 2 diabetes" (W4412758045); and "Liraglutide vs Semaglutide vs
+      Dulaglutide in Veterans With Type 2 Diabetes" (W4415106329). All other works from
+      the profile are intentionally excluded from the round-2 retrieval.
+
+  - slug: xuan-wang
+    name: "Xuan Wang"
+    aliases: ["Xuan Wang", "X. Wang"]
+    role: faculty
+    orcid: "0000-0002-0011-5663"
+    openalex_author_id: "A5100328982"
+    faculty_page_url: null
+    works_count: 168
+    status: resolved
+    evidence: >
+      University of Utah biostatistics materials and a University of Utah job posting
+      identify Xuan Wang as an Assistant Professor in Biostatistics working on EHR risk
+      prediction, causal inference, surrogate evaluation, survival analysis, and federated
+      transfer learning. PubMed for "Endovascular Aneurysm Repair Devices as a Use Case for
+      Postmarketing Surveillance of Medical Devices" lists Xuan Wang with dual affiliations
+      Harvard Medical School and University of Utah; the matching OpenAlex work assigns that
+      paper to author A5100328982. ResearchGate also lists Utah Biostatistics/Biomedical
+      Informatics publications including EHR-based rheumatoid-arthritis work. OpenAlex's
+      aggregate author profile carries noisy non-Utah affiliations, so this common-name
+      resolution should be human-checked, but the title-anchored paper match is strong.
+
+  - slug: jincheng-shen
+    name: "Jincheng Shen"
+    aliases: ["Jincheng Shen", "J. Shen"]
+    role: faculty
+    orcid: "0000-0002-6551-3558"
+    openalex_author_id: "A5016257520"
+    faculty_page_url: "https://medicine.utah.edu/faculty/jincheng-shen"
+    works_count: 160
+    status: resolved
+    evidence: >
+      University of Utah faculty page identifies Jincheng Shen as an Assistant Professor in
+      Population Health Sciences/Epidemiology with causal-inference, heterogeneous-treatment-
+      effect, and statistical-genetics interests. OpenAlex search returned a dominant Utah/
+      Huntsman-linked Jincheng Shen record, A5016257520, with University of Utah affiliation
+      history and topics including advanced causal inference, hypertension, and diabetes,
+      matching the faculty profile.
+
+  - slug: bernardo-modenesi
+    name: "Bernardo Modenesi"
+    aliases: ["Bernardo Modenesi", "B. Modenesi"]
+    role: faculty
+    orcid: null
+    openalex_author_id: "A5077589714"
+    faculty_page_url: "https://medicine.utah.edu/faculty/bernardo-modenesi"
+    works_count: 21
+    status: resolved
+    evidence: >
+      University of Utah faculty page and Bernardo Modenesi's personal site both identify
+      him as tenure-track Biostatistics faculty working at the intersection of causal
+      inference and machine learning. OpenAlex search returned a single Bernardo Modenesi
+      record, A5077589714, with University of Utah as the last-known institution and recent
+      Utah-era output, making this an uncomplicated resolution.
+
+  - slug: yue-zhang
+    name: "Yue Zhang"
+    aliases: ["Yue Zhang", "Y. Zhang"]
+    role: faculty
+    orcid: "0000-0002-4124-4816"
+    openalex_author_id: "A5100333714"
+    faculty_page_url: "https://medicine.utah.edu/faculty/yue-zhang"
+    works_count: 229
+    status: resolved
+    evidence: >
+      User review (2026-08-20) confirmed the Yue Zhang records are correct. University of
+      Utah faculty materials identify her as an Internal Medicine / Epidemiology / Public
+      Health faculty member and list Utah publications on patient-reported outcomes, COVID-19
+      among healthcare personnel, and Veterans Affairs hospitalizations. Retrieval uses
+      primary record A5100333714 plus the confirmed one-work fragment A5100333651 for the
+      Utah mEVAL paper W4410479390.

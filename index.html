@@ -467,6 +467,15 @@
   #page-inner .path-label, #graph-preview-inner .path-label { font-size: 11px; color: var(--muted); margin-top: 24px; }
   #page-inner hr, #graph-preview-inner hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
+  /* Linked-paper list (author/topic preview) */
+  .linked-paper-item { padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .linked-paper-item:last-child { border-bottom: none; }
+  .linked-paper-item:hover .linked-paper-title { color: var(--accent); }
+  .linked-paper-title { font-weight: 600; margin-bottom: 2px; line-height: 1.4; }
+  .linked-paper-meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
+  .linked-paper-authors { font-size: 12px; line-height: 1.6; }
+  .division-author { color: var(--color-person); font-weight: 600; }
+
   /* ── Footer ─────────────────────────────────────────────────────────── */
   #footer {
     grid-area: footer;
@@ -1278,7 +1287,7 @@ function render() {
       );
       if (!linked) continue;
       const highlighted = focusedId === author.id || focusedId === topic.id;
-      edges.push({ from: author.id, to: topic.id, color: { color: highlighted ? "rgba(77,134,168,.58)" : "rgba(77,134,168,.16)" }, width: highlighted ? 1.5 : .55, smooth: false });
+      edges.push({ from: author.id, to: topic.id, color: { color: highlighted ? "rgba(77,134,168,.58)" : "rgba(77,134,168,.32)" }, width: highlighted ? 1.5 : .6, smooth: false });
     }
   }
   for (const edge of graph.edges) {
@@ -1321,7 +1330,9 @@ function selectNode(id) {
   if (!node) return;
   if (paperId(node)) {
     const author = primaryAuthorId(node);
-    if (author) expandedAuthorIds = new Set([author]);
+    expandedAuthorIds = author ? new Set([author]) : new Set();
+  } else if (conceptId(node)) {
+    expandedAuthorIds = new Set();
   }
   focusedId = id;
   render(); buildDirectory(); showPreview(id);
@@ -1374,6 +1385,34 @@ function updateSearch() {
   host.style.display = matches.length ? "block" : "none";
 }
 
+function authorsForPaper(id) {
+  return graph.edges.filter(e => e.section === "author" && e.target === id).map(e => byId[e.source]).filter(Boolean);
+}
+
+function papersForAuthor(id) {
+  return graph.edges.filter(e => e.section === "author" && e.source === id).map(e => byId[e.target]).filter(paperId);
+}
+
+function papersForTopic(id) {
+  return graph.edges.filter(e => e.section === "subtopic" && e.target === id).map(e => byId[e.source]).filter(paperId);
+}
+
+function paperListHtml(papers) {
+  if (!papers.length) return '<p style="color:var(--muted);font-style:italic;">No linked publications.</p>';
+  const sorted = [...papers].sort((a, b) => (b.metadata.year || 0) - (a.metadata.year || 0));
+  return sorted.map(p => {
+    const authorNames = authorsForPaper(p.id).map(a => a.label);
+    const authorsHtml = authorNames.length
+      ? authorNames.map(name => `<span class="division-author">${escapeHtml(name)}</span>`).join(", ")
+      : '<span style="color:var(--muted);">Not available</span>';
+    return `<div class="linked-paper-item" data-paper-id="${p.id}">
+      <div class="linked-paper-title">${escapeHtml(p.metadata.title || p.label)}</div>
+      <div class="linked-paper-meta">${escapeHtml(p.metadata.year || "n.d.")} &middot; ${escapeHtml(p.metadata.venue || "Not available")}</div>
+      <div class="linked-paper-authors">${authorsHtml}</div>
+    </div>`;
+  }).join("");
+}
+
 function showPreview(id) {
   const node = byId[id]; if (!node) return;
   document.getElementById("graph-preview-title").textContent = node.label;
@@ -1390,11 +1429,11 @@ function showPage(id, host = document.getElementById("page-inner")) {
     const doi = metadata.doi ? `<p><strong>DOI:</strong> <a href="https://doi.org/${encodeURIComponent(metadata.doi)}" target="_blank" rel="noopener">${escapeHtml(metadata.doi)}</a></p>` : "";
     details = `<p><strong>Title:</strong> ${escapeHtml(metadata.title || node.summary)}</p><p><strong>Venue:</strong> ${escapeHtml(metadata.venue || "Not available")}</p><p><strong>Year:</strong> ${escapeHtml(metadata.year || "Not available")}</p>${doi}<p><strong>EHR role:</strong> ${escapeHtml(metadata.ehr_role || "Not available")}</p><p><strong>Subtopics:</strong> ${escapeHtml((metadata.subtopics || []).join(", ") || "None")}</p>`;
   } else if (personId(node)) {
-    const count = layoutModel().primaryPapers.get(node.id)?.length || 0;
-    details = `<p>${escapeHtml(node.summary || "Author")}</p><p><strong>Primary display anchor for:</strong> ${count} publication${count === 1 ? "" : "s"}</p><p>Click the author circle to expand or collapse these publications.</p>`;
+    const papers = papersForAuthor(node.id);
+    details = `<p>${escapeHtml(node.summary || "Author")}</p><h2>Publications (${papers.length})</h2>${paperListHtml(papers)}`;
   } else {
-    const count = layoutModel().papers.filter(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === node.id)).length;
-    details = `<p>Publications are connected to this subtopic only when a publication or subtopic is selected.</p><p><strong>Tagged publications:</strong> ${count}</p>`;
+    const papers = papersForTopic(node.id);
+    details = `<h2>Publications (${papers.length})</h2>${paperListHtml(papers)}`;
   }
   host.innerHTML = `<div class="meta"><span class="badge" style="color:${color}">${TYPE_LABELS[node.type]}</span></div><h1>${escapeHtml(node.label)}</h1>${details}`;
 }
@@ -1423,6 +1462,12 @@ function init() {
   document.getElementById("resetBtn").addEventListener("click", () => { focusedId = null; expandedAuthorIds.clear(); render(); buildDirectory(); document.getElementById("graph-preview").classList.add("hidden"); });
   document.getElementById("search-input").addEventListener("input", updateSearch);
   document.getElementById("graph-preview-close").addEventListener("click", () => document.getElementById("graph-preview").classList.add("hidden"));
+  for (const hostId of ["page-inner", "graph-preview-inner"]) {
+    document.getElementById(hostId).addEventListener("click", event => {
+      const item = event.target.closest(".linked-paper-item");
+      if (item) selectNode(item.dataset.paperId);
+    });
+  }
   document.getElementById("graph-preview-open").addEventListener("click", () => { if (!focusedId) return; showPage(focusedId); switchView("page"); });
   document.getElementById("graphTab").addEventListener("click", () => switchView("graph"));
   document.getElementById("pageTab").addEventListener("click", () => switchView("page"));

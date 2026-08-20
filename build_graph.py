@@ -133,14 +133,30 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
     nodes: dict[str, dict[str, Any]] = {}
     edges: set[tuple[str, str, str]] = set()
 
+    # Curated topics get a node up front so a direct person->topic link works even for a
+    # topic no paper has been tagged with yet.
+    for topic in CURATED_TOPICS:
+        concept_id = f"concept:{kebab_case(topic)}"
+        nodes[concept_id] = {
+            "id": concept_id, "type": "concept", "slug": kebab_case(topic),
+            "label": topic, "tier": None, "exists": True, "path": None,
+            "summary": "Curated topic (2026 retreat taxonomy)",
+            "metadata": {"inbound": 0, "curated": True},
+        }
+
     for slug, author in authors.items():
         if author.get("status") != "resolved":
             continue
-        nodes[f"person:{slug}"] = {
-            "id": f"person:{slug}", "type": "person", "slug": slug,
+        person_id = f"person:{slug}"
+        nodes[person_id] = {
+            "id": person_id, "type": "person", "slug": slug,
             "label": author.get("name") or slug, "tier": None, "exists": True,
             "path": None, "summary": author.get("role") or "", "metadata": {"inbound": 0},
         }
+        for topic in author.get("topics") or []:
+            if topic not in CURATED_TOPICS:
+                raise ValueError(f"author {slug!r} has unknown direct topic {topic!r}")
+            edges.add((person_id, f"concept:{kebab_case(topic)}", "topic"))
 
     for slug, paper in papers.items():
         paper_id = f"paper:{slug}"
@@ -178,6 +194,19 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
                 "metadata": {"inbound": 0, "curated": curated},
             })
             edges.add((paper_id, concept_id, "subtopic"))
+
+    # Every person must reach a topic, directly (an author->topic "topic" edge) or
+    # indirectly (an authored paper carrying a "subtopic" edge to a topic).
+    for node_id in nodes:
+        if not node_id.startswith("person:"):
+            continue
+        has_direct = any(s == node_id and section == "topic" for s, _t, section in edges)
+        if has_direct:
+            continue
+        authored_papers = {t for s, t, section in edges if s == node_id and section == "author"}
+        has_indirect = any(s in authored_papers and section == "subtopic" for s, _t, section in edges)
+        if not has_indirect:
+            raise ValueError(f"person {node_id!r} has no direct or indirect topic link")
 
     sorted_edges = [
         {"source": source, "target": target, "section": section}

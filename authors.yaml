@@ -17,6 +17,7 @@ authors:
       name "Alec B. Chapman"; affiliations include University of Utah (2023-2026) and
       US Department of Veterans Affairs (2020-2021), matching known VA/Utah data
       scientist role. cited_by_count: 433.
+    topics: ["Target trial emulation & causal inference", "Dynamic treatment regimes"]
 
   - slug: daniel-scharfstein
     name: "Daniel Scharfstein"
@@ -35,6 +36,7 @@ authors:
       Lake City Healthcare System (matches known career path). Two other tiny same-name
       records exist (A5139668262, 3 works; A5064647937, 1 work) and were rejected as
       fragments/duplicates, not the primary record.
+    topics: ["Target trial emulation & causal inference", "Dynamic treatment regimes", "Missing & informative data", "Survival analysis", "Confounding"]
 
   - slug: yizhen-xu
     name: "Yizhen Xu"
@@ -59,6 +61,7 @@ authors:
       carries some unrelated affiliations (e.g. Foshan University, Xidian University) from
       OpenAlex's common-surname clustering noise — does not affect identity confidence but
       may add noise if pulling the full works list.
+    topics: ["Latent trajectories"]
 
   - slug: yizhe-crystal-xu
     name: "Yizhe (Crystal) Xu"
@@ -89,6 +92,7 @@ authors:
       clustering noise for "Yizhe Xu" — does not affect identity confidence given the
       strong Utah/Stanford/dementia-research match, but will add noise if pulling the
       full works list; filtering by lookback_start + topic may be warranted downstream.
+    topics: ["Target trial emulation & causal inference", "Treatment effect heterogeneity"]
 
   - slug: christian-dalton
     name: "Christian Dalton"
@@ -126,6 +130,7 @@ authors:
       affiliations and health-data topics. An Oxford/OFID abstract snippet for "SARS-CoV-2
       Transmission in Utah Nursing Homes" lists Julia Bohman, BS, at the University of Utah,
       consistent with this profile.
+    topics: ["Prediction", "Survival analysis"]
 
   - slug: yidan-zhang
     name: "Yidan Zhang"
@@ -144,6 +149,7 @@ authors:
       search returned one Utah-linked Yidan Zhang record, A5134057794, with a single 2026
       University of Utah paper. This remains a common-name case, but the Utah student
       listing plus exact-institution OpenAlex match make the ID usable pending human review.
+    topics: ["Missing & informative data"]
 
   - slug: yongjun-lee
     name: "Yongjun Lee"
@@ -183,6 +189,7 @@ authors:
       in veterans with type 2 diabetes" (W4412758045); and "Liraglutide vs Semaglutide vs
       Dulaglutide in Veterans With Type 2 Diabetes" (W4415106329). All other works from
       the profile are intentionally excluded from the round-2 retrieval.
+    topics: ["Target trial emulation & causal inference"]
 
   - slug: xuan-wang
     name: "Xuan Wang"
@@ -204,6 +211,7 @@ authors:
       Informatics publications including EHR-based rheumatoid-arthritis work. OpenAlex's
       aggregate author profile carries noisy non-Utah affiliations, so this common-name
       resolution should be human-checked, but the title-anchored paper match is strong.
+    topics: ["Target trial emulation & causal inference", "Federated & transfer learning", "Prediction", "Survival analysis"]
 
   - slug: jincheng-shen
     name: "Jincheng Shen"
@@ -221,6 +229,7 @@ authors:
       Huntsman-linked Jincheng Shen record, A5016257520, with University of Utah affiliation
       history and topics including advanced causal inference, hypertension, and diabetes,
       matching the faculty profile.
+    topics: ["Target trial emulation & causal inference", "Dynamic treatment regimes", "Treatment effect heterogeneity"]
 
   - slug: bernardo-modenesi
     name: "Bernardo Modenesi"
@@ -237,6 +246,7 @@ authors:
       inference and machine learning. OpenAlex search returned a single Bernardo Modenesi
       record, A5077589714, with University of Utah as the last-known institution and recent
       Utah-era output, making this an uncomplicated resolution.
+    topics: ["Prediction", "Confounding"]
 
   - slug: yue-zhang
     name: "Yue Zhang"

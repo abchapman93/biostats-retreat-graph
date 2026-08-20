@@ -15,8 +15,10 @@
     --accent: #cc0000;
     --danger: #cf222e;
 
-    --color-person: #cc0000;
+    --color-faculty: #cc0000;
+    --color-trainee: #9a1b2f;
     --color-paper: #ffffff;
+    --color-paper-outline: #ef9a9a;
     --color-concept: #b9d9ee;
 
     --sidebar-w: 260px;
@@ -297,6 +299,26 @@
     padding: 24px;
     font-size: 13px;
   }
+  #graph-legend {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 10;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    pointer-events: none;
+  }
+  #graph-legend-title {
+    margin-bottom: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+  }
   #zoom-controls {
     position: absolute;
     bottom: 12px;
@@ -474,7 +496,7 @@
   .linked-paper-title { font-weight: 600; margin-bottom: 2px; line-height: 1.4; }
   .linked-paper-meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
   .linked-paper-authors { font-size: 12px; line-height: 1.6; }
-  .division-author { color: var(--color-person); font-weight: 600; }
+  .division-author { color: var(--color-faculty); font-weight: 600; }
 
   /* ── Footer ─────────────────────────────────────────────────────────── */
   #footer {
@@ -542,10 +564,11 @@
       <details class="filter-section">
         <summary>Legend</summary>
         <div class="section-body">
-          <div class="legend-row"><span class="swatch" style="background:var(--color-person)"></span> Author</div>
-          <div class="legend-row"><span class="swatch" style="background:var(--color-paper);border:1px solid #7a0019"></span> Publication</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-faculty)"></span> Faculty author (upper semicircle)</div>
+          <div class="legend-row"><span class="swatch" style="background:#ffffff;border:1px solid var(--color-trainee)"></span> Student / postdoctoral author (lower semicircle)</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-paper);border:1px solid var(--color-paper-outline)"></span> Publication</div>
           <div class="legend-row"><span class="swatch" style="background:var(--color-concept)"></span> Subtopic</div>
-          <div class="legend-note">Select an author or publication to expand its work. Publication–subtopic links appear on selection.</div>
+          <div class="legend-note">Select an author to expand its publications. Publication–subtopic links appear on selection.</div>
         </div>
       </details>
 
@@ -560,6 +583,13 @@
       <div id="graph-canvas-area">
         <div id="graph-canvas"></div>
         <div id="graph-error" style="display:none"></div>
+        <div id="graph-legend" aria-label="Graph legend">
+          <div id="graph-legend-title">Legend</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-faculty)"></span> Faculty author</div>
+          <div class="legend-row"><span class="swatch" style="background:#ffffff;border:1px solid var(--color-trainee)"></span> Student / postdoctoral author</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-paper);border:1px solid var(--color-paper-outline)"></span> Publication</div>
+          <div class="legend-row"><span class="swatch" style="background:var(--color-concept)"></span> Subtopic</div>
+        </div>
         <div id="zoom-controls">
           <button id="zoomIn" title="Zoom in">+</button>
           <button id="zoomOut" title="Zoom out">−</button>
@@ -1146,7 +1176,7 @@ function shutdown() {
 <script type="module">
 // Presentation layout: topics form the quiet center, authors are the red ring,
 // and publications are deliberately expanded one author at a time.
-const COLORS = { person: "#cc0000", paper: "#ffffff", concept: "#b9d9ee" };
+const COLORS = { person: "#cc0000", faculty: "#cc0000", trainee: "#9a1b2f", paper: "#ffffff", paperOutline: "#ef9a9a", concept: "#b9d9ee" };
 const TYPE_LABELS = { person: "Author", paper: "Publication", concept: "Subtopic" };
 let graph = { nodes: [], edges: [], stats: {} };
 let byId = {};
@@ -1181,15 +1211,25 @@ function paperPasses(paper) {
   return paperId(paper) && activeTypes.has("paper") && (!ehrOnly || paper.metadata.ehr_relevant === true);
 }
 
+function isFaculty(author) {
+  return author.metadata && author.metadata.role === "faculty";
+}
+
 function layoutModel() {
   const papers = graph.nodes.filter(paperPasses);
   const allowedPaperIds = new Set(papers.map(n => n.id));
   const authors = graph.nodes.filter(personId).filter(author =>
-    activeTypes.has("person") && papers.some(p => graph.edges.some(e => e.section === "author" && e.source === author.id && e.target === p.id))
+    activeTypes.has("person") && (
+      papers.some(p => graph.edges.some(e => e.section === "author" && e.source === author.id && e.target === p.id)) ||
+      graph.edges.some(e => e.section === "topic" && e.source === author.id)
+    )
   );
   const authorIds = new Set(authors.map(n => n.id));
   const topics = graph.nodes.filter(conceptId).filter(topic =>
-    activeTypes.has("concept") && papers.some(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id))
+    activeTypes.has("concept") && (
+      papers.some(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)) ||
+      authors.some(author => graph.edges.some(e => e.section === "topic" && e.source === author.id && e.target === topic.id))
+    )
   );
   const topicIds = new Set(topics.map(n => n.id));
   const primaryPapers = new Map(authors.map(a => [a.id, []]));
@@ -1213,7 +1253,6 @@ function makeNode(data, x, y, extra = {}) {
 }
 
 function tooltip(node) {
-  if (node.kind === "bundle") return `${node.count} publications\nClick to expand`;
   const details = [node.label];
   if (node.type === "paper") details.push(node.metadata.ehr_relevant ? "EHR-focused" : "Not EHR-focused");
   if (node.summary) details.push(node.summary);
@@ -1240,26 +1279,26 @@ function render() {
     }));
   });
 
-  model.authors.sort((a, b) => a.label.localeCompare(b.label)).forEach((author, i, all) => {
-    const angle = -Math.PI / 2 + i * Math.PI * 2 / Math.max(1, all.length);
+  const faculty = model.authors.filter(isFaculty).sort((a, b) => a.label.localeCompare(b.label));
+  const trainees = model.authors.filter(author => !isFaculty(author)).sort((a, b) => a.label.localeCompare(b.label));
+  const authorPositions = [
+    ...faculty.map((author, i) => ({ author, angle: -Math.PI + (i + .5) * Math.PI / faculty.length })),
+    ...trainees.map((author, i) => ({ author, angle: (i + .5) * Math.PI / trainees.length })),
+  ];
+
+  authorPositions.forEach(({ author, angle }) => {
     const point = polar(angle, authorRadius);
     positions.set(author.id, { ...point, angle });
     const count = model.primaryPapers.get(author.id).length;
     nodes.push(makeNode(author, point.x, point.y, {
-      size: Math.min(32, 15 + Math.sqrt(count) * 1.7),
-      color: { background: COLORS.person, border: "#7a0019" }, borderWidth: 2,
+      size: 18,
+      color: isFaculty(author)
+        ? { background: COLORS.faculty, border: "#7a0019" }
+        : { background: "#ffffff", border: COLORS.trainee },
+      borderWidth: 2,
       font: { color: "#4b0010", size: 13, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
     }));
-    if (!activeTypes.has("paper") || !count) return;
-    const bundle = polar(angle, authorRadius + 92);
-    const bundleId = `bundle:${author.id}`;
-    nodes.push(makeNode({ id: bundleId, label: `${count}`, kind: "bundle", count }, bundle.x, bundle.y, {
-      size: Math.min(29, 11 + Math.sqrt(count) * 2.2),
-      color: { background: "#ffffff", border: "#cc0000" }, borderWidth: 2,
-      font: { color: "#7a0019", size: 12, face: "Arial" },
-    }));
-
-    if (!expandedAuthorIds.has(author.id)) return;
+    if (!activeTypes.has("paper") || !count || !expandedAuthorIds.has(author.id)) return;
     const publications = model.primaryPapers.get(author.id).sort((a, b) => a.label.localeCompare(b.label));
     const rows = Math.ceil(publications.length / 12);
     publications.forEach((paper, j) => {
@@ -1271,7 +1310,7 @@ function render() {
       const p = polar(angle + offset, authorRadius + 145 + row * 62);
       positions.set(paper.id, { ...p, angle: angle + offset });
       nodes.push(makeNode(paper, p.x, p.y, {
-        size: 8, color: { background: COLORS.paper, border: "#9a1b2f" }, borderWidth: 1.4,
+        size: 8, color: { background: COLORS.paper, border: COLORS.paperOutline }, borderWidth: 1.4,
         font: { color: "#303030", size: 10, face: "Arial", strokeWidth: 4, strokeColor: "#ffffff" },
       }));
     });
@@ -1313,7 +1352,6 @@ function render() {
   network.on("click", params => {
     if (!params.nodes.length) return;
     const id = params.nodes[0];
-    if (id.startsWith("bundle:")) return toggleAuthor(id.slice(7));
     if (personId(byId[id])) return toggleAuthor(id);
     selectNode(id);
   });
@@ -1358,7 +1396,7 @@ function buildDirectory() {
     const details = document.createElement("details"); details.className = "entity-group";
     details.open = type !== "paper";
     const summary = document.createElement("summary");
-    summary.innerHTML = `<span class="swatch" style="background:${COLORS[type]};${type === "paper" ? "border:1px solid #7a0019" : ""}"></span>${TYPE_LABELS[type]}<span class="entity-count">${items.length}</span>`;
+    summary.innerHTML = `<span class="swatch" style="background:${COLORS[type]};${type === "paper" ? `border:1px solid ${COLORS.paperOutline}` : ""}"></span>${TYPE_LABELS[type]}<span class="entity-count">${items.length}</span>`;
     details.append(summary);
     const list = document.createElement("div"); list.className = "entity-group-list";
     for (const node of items) {
@@ -1467,7 +1505,7 @@ function init() {
   const filterHost = document.getElementById("typeFilters");
   for (const type of ["person", "paper", "concept"]) {
     const label = document.createElement("label"); label.className = "filter";
-    label.innerHTML = `<input type="checkbox" data-type="${type}" checked><span class="swatch" style="background:${COLORS[type]};${type === "paper" ? "border:1px solid #7a0019" : ""}"></span>${TYPE_LABELS[type]}`;
+    label.innerHTML = `<input type="checkbox" data-type="${type}" checked><span class="swatch" style="background:${COLORS[type]};${type === "paper" ? `border:1px solid ${COLORS.paperOutline}` : ""}"></span>${TYPE_LABELS[type]}`;
     filterHost.append(label);
   }
   filterHost.addEventListener("change", event => { const type = event.target.dataset.type; if (!type) return; event.target.checked ? activeTypes.add(type) : activeTypes.delete(type); render(); buildDirectory(); });

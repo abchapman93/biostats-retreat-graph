@@ -152,7 +152,8 @@ def build_graph(authors: dict[str, dict[str, Any]], papers: dict[str, dict[str, 
         nodes[person_id] = {
             "id": person_id, "type": "person", "slug": slug,
             "label": author.get("name") or slug, "tier": None, "exists": True,
-            "path": None, "summary": author.get("role") or "", "metadata": {"inbound": 0},
+            "path": None, "summary": author.get("role") or "",
+            "metadata": {"inbound": 0, "role": author.get("role") or ""},
         }
         for topic in author.get("topics") or []:
             if topic not in CURATED_TOPICS:

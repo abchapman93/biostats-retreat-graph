@@ -11,8 +11,14 @@ The default view keeps the graph readable for a retreat presentation:
 - unfilled, light-red-outlined circles in the lower semicircle are student and postdoctoral authors; and
 - soft-blue circles in the center are subtopics.
 
+The graph is laid out to fill the window: the search/filter/directory side
+panel starts collapsed (the **☰** button in the top bar shows it again), and
+the rings widen with the window so labels stay large on a projector.
+
 Click an author to expand that author's publications. Each publication remains connected to every division coauthor,
-but is positioned around one primary display author. Click a publication to see
+but is positioned around one primary display author. Publications fan out in at
+most six arcs, labelled by year alone once an author has more than two dozen of
+them, so the rest of the graph stays readable. Click a publication to see
 its metadata and its subtopic links. The **EHR-focused only** control filters
 the view to EHR-relevant publications and their connected authors/subtopics.
 The preview panel opens immediately with an empty paper list and a brief initial

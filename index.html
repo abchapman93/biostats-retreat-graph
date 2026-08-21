@@ -21,7 +21,7 @@
     --color-paper-outline: #ef9a9a;
     --color-concept: #b9d9ee;
 
-    --sidebar-w: 260px;
+    --sidebar-w: 272px;
   }
   * { box-sizing: border-box; }
   html, body {
@@ -29,12 +29,12 @@
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     color: var(--text);
     background: var(--bg);
-    font-size: 14px;
+    font-size: 15px;
   }
   #app {
     display: grid;
     grid-template-columns: var(--sidebar-w) 1fr;
-    grid-template-rows: 48px 1fr 28px;
+    grid-template-rows: 48px 1fr 26px;
     grid-template-areas:
       "topbar topbar"
       "sidebar main"
@@ -58,7 +58,7 @@
   }
   #topbar h1 {
     margin: 0;
-    font-size: 15px;
+    font-size: 18px;
     font-weight: 600;
     white-space: nowrap;
   }
@@ -72,14 +72,14 @@
     background: var(--bg);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 5px 10px;
+    padding: 5px 11px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     white-space: nowrap;
   }
   #topbar button:hover { background: #f0f3f6; }
   #sidebarToggle {
-    font-size: 16px;
+    font-size: 18px;
     padding: 4px 8px !important;
     background: transparent !important;
     border-color: transparent !important;
@@ -95,9 +95,9 @@
     gap: 2px;
   }
   #view-tabs .tab {
-    padding: 4px 14px;
+    padding: 5px 16px;
     border-radius: 5px;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 500;
     cursor: pointer;
     border: none;
@@ -120,7 +120,7 @@
   }
   #graph-controls.visible { display: flex; }
   #graph-controls label {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--muted);
     display: flex;
     align-items: center;
@@ -133,7 +133,7 @@
     background: var(--bg);
     color: var(--text);
     padding: 3px 5px;
-    font-size: 12px;
+    font-size: 13px;
   }
 
   /* ── Sidebar ────────────────────────────────────────────────────────── */
@@ -166,7 +166,7 @@
   .filter-section summary {
     cursor: pointer;
     user-select: none;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -187,8 +187,8 @@
     width: 100%;
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 13px;
+    padding: 7px 9px;
+    font-size: 14px;
     margin-bottom: 4px;
   }
   #search-results {
@@ -203,7 +203,7 @@
   .search-result-item {
     padding: 5px 8px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 13px;
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: baseline;
@@ -212,14 +212,14 @@
   .search-result-item:last-child { border-bottom: none; }
   .search-result-item:hover { background: #f0f3f6; }
   .search-result-label { font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .search-result-type { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
+  .search-result-type { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0; }
   .search-result-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 
   label.filter {
     display: flex;
     align-items: center;
     gap: 6px;
-    font-size: 13px;
+    font-size: 14px;
     padding: 2px 0;
     cursor: pointer;
   }
@@ -232,15 +232,15 @@
   }
 
   /* Legend */
-  .legend-row { font-size: 12px; line-height: 1.8; display: flex; align-items: center; gap: 6px; }
-  .legend-note { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+  .legend-row { font-size: 13px; line-height: 1.75; display: flex; align-items: center; gap: 7px; }
+  .legend-note { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
 
   /* Entity directory list */
   .entity-group { margin-bottom: 2px; }
   .entity-group > summary {
     cursor: pointer;
     user-select: none;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     padding: 4px 2px;
     display: flex;
@@ -252,11 +252,11 @@
   .entity-group > summary::-webkit-details-marker { display: none; }
   .entity-group > summary::before { content: "▸"; font-size: 9px; color: var(--muted); flex-shrink: 0; }
   .entity-group[open] > summary::before { content: "▾"; }
-  .entity-count { font-size: 10px; color: var(--muted); margin-left: auto; font-weight: 400; }
+  .entity-count { font-size: 11px; color: var(--muted); margin-left: auto; font-weight: 400; }
   .entity-group-list { padding-bottom: 4px; }
   .entity-list-item {
     padding: 3px 6px 3px 20px;
-    font-size: 12px;
+    font-size: 13px;
     cursor: pointer;
     border-radius: 4px;
     white-space: nowrap;
@@ -309,23 +309,18 @@
   }
   #graph-legend {
     position: absolute;
-    top: 12px;
-    left: 12px;
+    top: 10px;
+    left: 10px;
     z-index: 10;
-    padding: 8px 10px;
+    padding: 8px 14px;
     border: 1px solid var(--border);
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.94);
+    background: rgba(255, 255, 255, 0.92);
     box-shadow: 0 1px 3px rgba(0,0,0,0.08);
     pointer-events: none;
-  }
-  #graph-legend-title {
-    margin-bottom: 3px;
-    font-size: 11px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--muted);
+    display: grid;
+    grid-template-columns: auto auto;
+    column-gap: 20px;
   }
   #zoom-controls {
     position: absolute;
@@ -337,8 +332,8 @@
     z-index: 10;
   }
   #zoom-controls button {
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     border: 1px solid var(--border);
     background: var(--bg);
     border-radius: 6px;
@@ -355,10 +350,12 @@
   }
   #zoom-controls button:hover { background: #f0f3f6; }
   #zoom-controls button.fit { font-size: 13px; }
+  #graph-legend .legend-row { font-size: 14px; line-height: 1.7; white-space: nowrap; }
+  #graph-legend .swatch { width: 12px; height: 12px; }
 
   /* Graph preview panel */
   #graph-preview {
-    width: 360px;
+    width: 400px;
     flex-shrink: 0;
     border-left: 1px solid var(--border);
     background: var(--bg);
@@ -371,14 +368,14 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 7px 10px;
+    padding: 8px 12px;
     border-bottom: 1px solid var(--border);
     background: var(--panel);
     flex-shrink: 0;
   }
   #graph-preview-title {
     flex: 1;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -387,8 +384,8 @@
   }
   #attract-timer {
     display: none;
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     flex-shrink: 0;
     position: relative;
   }
@@ -417,8 +414,8 @@
     transform: translateY(-0.25px);
   }
   #graph-preview-header button {
-    padding: 3px 8px;
-    font-size: 11px;
+    padding: 4px 9px;
+    font-size: 12px;
     border: 1px solid var(--border);
     border-radius: 5px;
     background: var(--bg);
@@ -440,7 +437,7 @@
     overflow-y: auto;
   }
   #graph-preview-inner {
-    padding: 16px 18px 32px;
+    padding: 14px 18px 28px;
   }
 
   /* Page view */
@@ -452,21 +449,21 @@
   }
   #page-view.hidden { display: none; }
   #page-inner {
-    max-width: 760px;
+    max-width: 820px;
     margin: 0 auto;
-    padding: 28px 36px 48px;
+    padding: 26px 36px 44px;
   }
 
   /* Page content typography */
-  #page-inner, #graph-preview-inner { font-size: 14px; }
+  #page-inner, #graph-preview-inner { font-size: 15px; }
   #page-inner .placeholder {
     color: var(--muted);
     font-style: italic;
     margin-top: 32px;
-    font-size: 14px;
+    font-size: 15px;
   }
   #page-inner .meta, #graph-preview-inner .meta {
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
     margin-bottom: 10px;
     display: flex;
@@ -482,12 +479,12 @@
     border: 1px solid var(--border);
     font-weight: 500;
   }
-  #page-inner h1, #graph-preview-inner h1 { font-size: 22px; margin: 6px 0 16px; line-height: 1.3; }
-  #page-inner h2, #graph-preview-inner h2 { font-size: 16px; margin: 24px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
-  #page-inner h3, #graph-preview-inner h3 { font-size: 14px; margin: 16px 0 8px; }
-  #page-inner h4, #graph-preview-inner h4 { font-size: 13px; margin: 12px 0 6px; }
-  #page-inner p, #graph-preview-inner p { font-size: 14px; line-height: 1.65; margin: 0 0 12px; }
-  #page-inner li, #graph-preview-inner li { font-size: 14px; line-height: 1.6; margin-bottom: 4px; }
+  #page-inner h1, #graph-preview-inner h1 { font-size: 25px; margin: 4px 0 14px; line-height: 1.25; }
+  #page-inner h2, #graph-preview-inner h2 { font-size: 18px; margin: 20px 0 10px; border-bottom: 1px solid var(--border); padding-bottom: 5px; }
+  #page-inner h3, #graph-preview-inner h3 { font-size: 16px; margin: 16px 0 8px; }
+  #page-inner h4, #graph-preview-inner h4 { font-size: 15px; margin: 12px 0 6px; }
+  #page-inner p, #graph-preview-inner p { font-size: 15px; line-height: 1.6; margin: 0 0 10px; }
+  #page-inner li, #graph-preview-inner li { font-size: 15px; line-height: 1.6; margin-bottom: 4px; }
   #page-inner ul, #page-inner ol, #graph-preview-inner ul, #graph-preview-inner ol { padding-left: 22px; margin: 0 0 12px; }
   #page-inner code, #graph-preview-inner code {
     background: var(--panel);
@@ -536,18 +533,18 @@
   #page-inner hr, #graph-preview-inner hr { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
 
   /* Linked-paper list (author/topic preview) */
-  .linked-paper-item { padding: 10px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+  .linked-paper-item { padding: 9px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
   .linked-paper-item:last-child { border-bottom: none; }
   .linked-paper-item:hover .linked-paper-title { color: var(--accent); }
-  .linked-paper-title { font-weight: 600; margin-bottom: 2px; line-height: 1.4; }
-  .linked-paper-meta { font-size: 12px; color: var(--muted); margin-bottom: 3px; }
-  .linked-paper-authors { font-size: 12px; line-height: 1.6; }
+  .linked-paper-title { font-size: 16px; font-weight: 600; margin-bottom: 3px; line-height: 1.35; }
+  .linked-paper-meta { font-size: 13px; color: var(--muted); margin-bottom: 3px; }
+  .linked-paper-authors { font-size: 13px; line-height: 1.5; }
   .division-author { color: var(--color-faculty); font-weight: 600; }
 
   /* Idle topic feed */
   .attract-paper-feed { animation: attract-feed-in 0.4s ease; }
-  .attract-paper-item { padding: 14px 0; }
-  .attract-paper-item .linked-paper-title { font-size: 15px; line-height: 1.45; }
+  .attract-paper-item { padding: 11px 0; }
+  .attract-paper-item .linked-paper-title { font-size: 18px; line-height: 1.35; }
   .attract-paper-item .linked-paper-authors { margin-top: 5px; }
   .attract-paper-item .linked-paper-meta { margin-top: 3px; margin-bottom: 0; }
   @keyframes attract-countdown {
@@ -571,18 +568,18 @@
     display: flex;
     align-items: center;
     padding: 0 14px;
-    font-size: 11px;
+    font-size: 12px;
     color: var(--muted);
     gap: 14px;
   }
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app" class="sidebar-collapsed">
 
   <!-- Topbar -->
   <div id="topbar">
-    <button id="sidebarToggle" title="Toggle sidebar">☰</button>
+    <button id="sidebarToggle" title="Show/hide search, filters, and directory" aria-label="Show or hide the side panel">☰</button>
     <h1>EHR Research Knowledge Graph</h1>
     <div class="divider"></div>
     <div id="view-tabs">
@@ -616,7 +613,7 @@
 
       <!-- Search -->
       <div style="margin-bottom: 4px;">
-        <div style="font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 6px 2px;">Search</div>
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 6px 2px;">Search</div>
         <input type="text" id="search-input" placeholder="Find entity by name or slug…" autocomplete="off">
         <div id="search-results"></div>
       </div>
@@ -631,7 +628,7 @@
       <details class="filter-section" open>
         <summary>Directory</summary>
         <div class="section-body" id="entity-directory">
-          <div style="color:var(--muted);font-size:12px;font-style:italic;">Loading…</div>
+          <div style="color:var(--muted);font-size:13px;font-style:italic;">Loading…</div>
         </div>
       </details>
 
@@ -659,7 +656,6 @@
         <div id="graph-canvas"></div>
         <div id="graph-error" style="display:none"></div>
         <div id="graph-legend" aria-label="Graph legend">
-          <div id="graph-legend-title">Legend</div>
           <div class="legend-row"><span class="swatch" style="background:var(--color-faculty)"></span> Faculty author</div>
           <div class="legend-row"><span class="swatch" style="background:#ffffff;border:1px solid var(--color-trainee)"></span> Student / postdoctoral author</div>
           <div class="legend-row"><span class="swatch" style="background:var(--color-paper);border:1px solid var(--color-paper-outline)"></span> Publication</div>
@@ -1277,6 +1273,10 @@ let attractRemainingMs = 0;
 let attractPausedByUser = false;
 let attractIntervalMs = 5500;
 const ATTRACT_INITIAL_DELAY_MS = 3000;
+const PAPER_ROWS = 6;
+const AUTHOR_RADIUS = 400;
+const TOPIC_RADIUS = 206;
+let layoutNodes = [];
 
 const paperId = n => n && n.type === "paper";
 const personId = n => n && n.type === "person";
@@ -1493,14 +1493,99 @@ function layoutModel() {
   return { papers, allowedPaperIds, authors, authorIds, topics, topicIds, primaryPapers };
 }
 
-function polar(angle, radius) {
-  return { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius };
+function polar(angle, radius, stretch = 1) {
+  return { x: Math.cos(angle) * radius * stretch, y: Math.sin(angle) * radius };
+}
+
+// The layout is a circle by construction; widescreen canvases leave the left
+// and right thirds empty. Stretching x fills that space and buys the
+// horizontal room the larger labels need. Solve for the stretch that makes the
+// layout about as wide as the canvas while keeping the fit height-limited —
+// going wider than that would only shrink every label.
+function layoutStretch() {
+  const canvas = document.getElementById("graph-canvas");
+  const legend = legendRect();
+  const width = canvas.clientWidth || 1200;
+  const height = (canvas.clientHeight || 800) - (legend ? legend.bottom + 8 : 0);
+  const layoutHeight = 2 * AUTHOR_RADIUS + 100;  // node radius and label band, top and bottom
+  const labelOverhang = 240;                     // author labels, both sides
+  const stretch = ((width / Math.max(200, height)) * layoutHeight - labelOverhang) / (2 * AUTHOR_RADIUS);
+  return Math.max(1, Math.min(2.2, stretch * 0.95));
+}
+
+// vis-network's own fit() pads the range by 10% and never quite fills the
+// canvas. Positions and label metrics are known here, so fit them directly.
+function fitGraph(nodes = layoutNodes) {
+  if (!network || !nodes.length) return;
+  const canvas = document.getElementById("graph-canvas");
+  const width = canvas.clientWidth, height = canvas.clientHeight;
+  if (!width || !height) return;
+
+  const boxes = nodes.map(node => {
+    const size = node.size || 12;
+    const fontSize = (node.font && node.font.size) || 12;
+    const halfLabel = Math.min(150, String(node.label || "").length * fontSize * 0.27);
+    const half = Math.max(size, halfLabel);
+    return {
+      left: node.x - half, right: node.x + half,
+      top: node.y - size, bottom: node.y + size + fontSize * 1.9,
+    };
+  });
+  const bounds = boxes.reduce((acc, box) => ({
+    left: Math.min(acc.left, box.left), right: Math.max(acc.right, box.right),
+    top: Math.min(acc.top, box.top), bottom: Math.max(acc.bottom, box.bottom),
+  }), { left: Infinity, right: -Infinity, top: Infinity, bottom: -Infinity });
+
+  const place = topInset => {
+    const usable = Math.max(120, height - topInset);
+    const scale = Math.max(0.05, Math.min(
+      width / (bounds.right - bounds.left),
+      usable / (bounds.bottom - bounds.top),
+    ) * 0.99);
+    network.moveTo({
+      position: {
+        x: (bounds.left + bounds.right) / 2,
+        y: (bounds.top + bounds.bottom) / 2 - topInset / (2 * scale),
+      },
+      scale,
+      animation: false,
+    });
+  };
+
+  // Fill the whole canvas, then give the legend its corner back only if a node
+  // actually landed underneath it.
+  place(0);
+  const legend = legendRect();
+  network.redraw();
+  if (legend && nodes.some((node, i) => hidesLegend(node, boxes[i], legend))) place(legend.bottom + 8);
+}
+
+// Legend box in canvas-element pixels, or null when it is not on screen.
+function legendRect() {
+  const legend = document.getElementById("graph-legend");
+  const canvas = document.getElementById("graph-canvas");
+  if (!legend || !legend.offsetParent) return null;
+  const l = legend.getBoundingClientRect(), c = canvas.getBoundingClientRect();
+  if (!l.width || !l.height) return null;
+  return { left: l.left - c.left, right: l.right - c.left, top: l.top - c.top, bottom: l.bottom - c.top };
+}
+
+// Rendered label metrics beat the estimate above once the nodes have drawn.
+// A few pixels of slack keeps a label that merely grazes the legend from
+// costing the whole layout a band of height.
+function hidesLegend(node, box, legend) {
+  let bounds = box;
+  try { bounds = network.getBoundingBox(node.id) || box; } catch (_) { /* not drawn yet */ }
+  const topLeft = network.canvasToDOM({ x: bounds.left, y: bounds.top });
+  const bottomRight = network.canvasToDOM({ x: bounds.right, y: bounds.bottom });
+  return topLeft.x < legend.right - 5 && bottomRight.x > legend.left + 5 &&
+    topLeft.y < legend.bottom - 5 && bottomRight.y > legend.top + 5;
 }
 
 function makeNode(data, x, y, extra = {}) {
   return {
     id: data.id, label: data.label, x, y, fixed: { x: true, y: true },
-    shape: "dot", title: tooltip(data), font: { color: "#1f2328", size: 12, face: "Arial" },
+    shape: "dot", title: tooltip(data), font: { color: "#1f2328", size: 16, face: "Arial" },
     ...extra,
   };
 }
@@ -1525,8 +1610,13 @@ function render() {
   const model = layoutModel();
   const nodes = [];
   const positions = new Map();
-  const topicRadius = 165;
-  const authorRadius = 390;
+  const stretch = layoutStretch();
+  // Subtopic names are the longest labels in the graph and sit in the most
+  // horizontally generous part of the canvas, so the inner ring is stretched
+  // a little harder than the author ring.
+  const topicStretch = stretch * 1.12;
+  const topicRadius = TOPIC_RADIUS;
+  const authorRadius = AUTHOR_RADIUS;
   const attractTopicId = attractMode && conceptId(byId[focusedId]) ? focusedId : null;
   const attractAuthorIds = new Set(attractTopicId
     ? model.authors.filter(author => authorLinkedToTopic(author.id, attractTopicId, model.papers)).map(author => author.id)
@@ -1534,16 +1624,19 @@ function render() {
 
   model.topics.sort((a, b) => a.label.localeCompare(b.label)).forEach((topic, i, all) => {
     const angle = -Math.PI / 2 + i * Math.PI * 2 / Math.max(1, all.length);
-    const point = polar(angle, topicRadius);
+    const point = polar(angle, topicRadius, topicStretch);
     positions.set(topic.id, { ...point, angle });
     const count = model.papers.filter(p => graph.edges.some(e => e.section === "subtopic" && e.source === p.id && e.target === topic.id)).length;
     const highlighted = focusedId === topic.id;
     nodes.push(makeNode(topic, point.x, point.y, {
-      size: Math.min(34, 13 + Math.sqrt(count) * 1.4 + (highlighted ? 4 : 0)),
+      size: Math.min(36, 14 + Math.sqrt(count) * 1.45 + (highlighted ? 4 : 0)),
       color: { background: highlighted ? "#8fc6e5" : COLORS.concept, border: "#4d86a8" }, borderWidth: highlighted ? 3 : 1.5,
       shadow: highlighted ? { enabled: true, color: "rgba(77,134,168,.35)", size: 14, x: 0, y: 0 } : false,
       opacity: attractTopicId ? (highlighted ? 1 : 0.16) : 1,
-      font: { color: "#16384d", size: 12, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
+      font: {
+        color: attractTopicId && !highlighted ? "#c6d5df" : "#16384d",
+        size: 16, face: "Arial", strokeWidth: 6, strokeColor: "#ffffff",
+      },
     }));
   });
 
@@ -1555,32 +1648,42 @@ function render() {
   ];
 
   authorPositions.forEach(({ author, angle }) => {
-    const point = polar(angle, authorRadius);
+    const point = polar(angle, authorRadius, stretch);
     positions.set(author.id, { ...point, angle });
     const count = model.primaryPapers.get(author.id).length;
     nodes.push(makeNode(author, point.x, point.y, {
-      size: 18,
+      size: 19,
       color: isFaculty(author)
         ? { background: COLORS.faculty, border: "#7a0019" }
         : { background: "#ffffff", border: COLORS.trainee },
       borderWidth: 2,
       opacity: attractTopicId ? (attractAuthorIds.has(author.id) ? 0.82 : 0.12) : 1,
-      font: { color: "#4b0010", size: 13, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
+      font: {
+        color: attractTopicId && !attractAuthorIds.has(author.id) ? "#e2ccd0" : "#4b0010",
+        size: 17, face: "Arial", strokeWidth: 6, strokeColor: "#ffffff",
+      },
     }));
     if (!activeTypes.has("paper") || !count || !expandedAuthorIds.has(author.id)) return;
     const publications = model.primaryPapers.get(author.id).sort((a, b) => a.label.localeCompare(b.label));
-    const rows = Math.ceil(publications.length / 12);
+    // At most PAPER_ROWS arcs, so a prolific author's fan stays inside the
+    // viewport instead of pushing the fit scale — and every label — down.
+    const perRow = Math.max(12, Math.ceil(publications.length / PAPER_ROWS));
+    // Publications are sorted by "Lastname Year", so a crowded fan reads as a
+    // chronology; the shared author name is redundant at that density.
+    const yearOnly = publications.length > 24;
     publications.forEach((paper, j) => {
-      const row = Math.floor(j / 12);
-      const inRow = Math.min(12, publications.length - row * 12);
-      const col = j % 12;
-      const spread = Math.min(1.15, 0.12 + inRow * 0.09);
+      const row = Math.floor(j / perRow);
+      const inRow = Math.min(perRow, publications.length - row * perRow);
+      const col = j % perRow;
+      const radius = authorRadius + 132 + row * 58;
+      const spread = Math.min(1.5, 0.12 + inRow * 0.09);
       const offset = inRow === 1 ? 0 : (col / (inRow - 1) - 0.5) * spread;
-      const p = polar(angle + offset, authorRadius + 145 + row * 62);
+      const p = polar(angle + offset, radius, stretch);
       positions.set(paper.id, { ...p, angle: angle + offset });
-      nodes.push(makeNode(paper, p.x, p.y, {
+      const label = yearOnly ? String(paper.metadata.year || paper.label) : paper.label;
+      nodes.push(makeNode({ ...paper, label }, p.x, p.y, {
         size: 8, color: { background: COLORS.paper, border: COLORS.paperOutline }, borderWidth: 1.4,
-        font: { color: "#303030", size: 10, face: "Arial", strokeWidth: 4, strokeColor: "#ffffff" },
+        font: { color: "#303030", size: 13, face: "Arial", strokeWidth: 5, strokeColor: "#ffffff" },
       }));
     });
   });
@@ -1617,6 +1720,9 @@ function render() {
     physics: false,
     interaction: { hover: true, tooltipDelay: 120, dragNodes: false, multiselect: false },
   });
+  // vis-network rescales its view when the canvas changes size — showing or
+  // hiding the preview panel does exactly that — so re-fit when it happens.
+  network.on("resize", () => fitGraph());
   network.on("click", params => {
     if (!params.nodes.length) {
       toggleAttractPause();
@@ -1626,14 +1732,15 @@ function render() {
     if (personId(byId[id])) return toggleAuthor(id);
     selectNode(id);
   });
-  network.fit({ animation: false, padding: 0.12 });
+  layoutNodes = nodes;
+  fitGraph(nodes);
 }
 
 function toggleAuthor(authorId) {
   endAttractMode();
   focusedId = authorId;
   expandedAuthorIds = expandedAuthorIds.has(authorId) ? new Set() : new Set([authorId]);
-  render(); buildDirectory(); showPreview(authorId);
+  showPreview(authorId); render(); buildDirectory();
 }
 
 function selectNode(id) {
@@ -1647,7 +1754,7 @@ function selectNode(id) {
     expandedAuthorIds = new Set();
   }
   focusedId = id;
-  render(); buildDirectory(); showPreview(id);
+  showPreview(id); render(); buildDirectory();
 }
 
 function currentDirectoryNodes() {
@@ -1774,7 +1881,7 @@ function switchView(view) {
   document.getElementById("graphTab").classList.toggle("active", view === "graph");
   document.getElementById("pageTab").classList.toggle("active", view === "page");
   document.getElementById("graph-controls").classList.toggle("visible", view === "graph");
-  if (view === "graph" && network) setTimeout(() => { network.redraw(); network.fit({ animation: false, padding: .12 }); }, 30);
+  if (view === "graph" && network) setTimeout(() => { network.redraw(); fitGraph(); }, 30);
 }
 
 function init() {
@@ -1799,8 +1906,8 @@ function init() {
     ehrOnly = event.target.checked;
     focusedId = null;
     expandedAuthorIds.clear();
-    render(); buildDirectory();
     document.getElementById("graph-preview").classList.add("hidden");
+    render(); buildDirectory();
   });
   document.getElementById("refreshInterval").addEventListener("change", event => {
     setAttractInterval(Number(event.target.value));
@@ -1816,6 +1923,7 @@ function init() {
   document.getElementById("graph-preview-close").addEventListener("click", () => {
     endAttractMode();
     document.getElementById("graph-preview").classList.add("hidden");
+    render();
   });
   for (const hostId of ["page-inner", "graph-preview-inner"]) {
     document.getElementById(hostId).addEventListener("click", event => {
@@ -1826,10 +1934,19 @@ function init() {
   document.getElementById("graph-preview-open").addEventListener("click", () => { if (!focusedId) return; endAttractMode(); showPage(focusedId); switchView("page"); });
   document.getElementById("graphTab").addEventListener("click", () => { endAttractMode(); switchView("graph"); });
   document.getElementById("pageTab").addEventListener("click", () => { endAttractMode(); switchView("page"); });
-  document.getElementById("sidebarToggle").addEventListener("click", () => { endAttractMode(); document.getElementById("app").classList.toggle("sidebar-collapsed"); setTimeout(() => network && network.fit({ animation: false, padding: .12 }), 220); });
+  document.getElementById("sidebarToggle").addEventListener("click", () => {
+    endAttractMode();
+    document.getElementById("app").classList.toggle("sidebar-collapsed");
+    setTimeout(() => { if (network) render(); }, 220);
+  });
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    if (resizeTimer !== null) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => { resizeTimer = null; if (network) render(); }, 180);
+  });
   document.getElementById("zoomIn").addEventListener("click", () => { endAttractMode(); if (network) network.moveTo({ scale: network.getScale() * 1.2, animation: { duration: 180 } }); });
   document.getElementById("zoomOut").addEventListener("click", () => { endAttractMode(); if (network) network.moveTo({ scale: network.getScale() / 1.2, animation: { duration: 180 } }); });
-  document.getElementById("zoomFit").addEventListener("click", () => { endAttractMode(); if (network) network.fit({ animation: { duration: 220 }, padding: .12 }); });
+  document.getElementById("zoomFit").addEventListener("click", () => { endAttractMode(); fitGraph(); });
   document.getElementById("reloadBtn").addEventListener("click", reload);
   document.getElementById("doneBtn").addEventListener("click", () => { endAttractMode(); document.getElementById("stats").textContent = "Local viewer remains open."; });
   document.addEventListener("visibilitychange", () => document.hidden ? pauseAttractMode() : resumeAttractMode());

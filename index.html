@@ -1315,12 +1315,19 @@ function endAttractMode() {
   updateAttractPauseControl();
 }
 
+function clockwiseAttractTopics() {
+  // Same alphabetical ordering used by render() to place topics around the
+  // circle, so cycling through this list visits them in clockwise order.
+  return layoutModel().topics.filter(topic => papersForTopic(topic.id).some(paperPasses))
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
 function refillAttractTopicQueue() {
-  const topics = layoutModel().topics.filter(topic => papersForTopic(topic.id).some(paperPasses));
-  attractTopicQueue = shuffle(topics);
-  if (attractTopicQueue.length > 1 && attractTopicQueue[0].id === lastAttractTopicId) {
-    [attractTopicQueue[0], attractTopicQueue[1]] = [attractTopicQueue[1], attractTopicQueue[0]];
-  }
+  const topics = clockwiseAttractTopics();
+  if (!topics.length) { attractTopicQueue = []; return; }
+  const lastIndex = topics.findIndex(topic => topic.id === lastAttractTopicId);
+  const startIndex = lastIndex === -1 ? 0 : (lastIndex + 1) % topics.length;
+  attractTopicQueue = [...topics.slice(startIndex), ...topics.slice(0, startIndex)];
 }
 
 function randomizeAttractPapers(topicId) {
